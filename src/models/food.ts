@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { BaseModel, Models } from "./base";
+import { BaseModel, BaseOptions, Models } from "./base";
 import { IFoodModel } from "../interfaces/food";
 
 const FoodSchema = new Schema({
@@ -20,6 +20,8 @@ const FoodSchema = new Schema({
         type: Number,
         required: true
     }
+}, {
+    ...BaseOptions
 });
 
 export default mongoose.model<IFoodModel & mongoose.Document>(

@@ -2,10 +2,12 @@ import { Router, Request, Response } from "express";
 import {
     IMealModel,
     IMealCreateDTO,
-    IAddIngredientsDTO,
-    IUpdateIngredientDTO
+    IAddIngredientDTO,
+    IUpdateIngredientDTO,
+    Ingredient
 } from "../../interfaces/meal";
 import Meal from "../../models/meal";
+import { Schema, SchemaType } from "mongoose";
 
 const route = Router();
 
@@ -95,48 +97,23 @@ export default (app: Router) => {
                     res.send(err);
                 }
                 if (meal) {
-                    //Ingredients array of the meal
-                    const ingredients = (JSON.parse(
-                        JSON.stringify(meal)
-                    ) as IMealModel).ingredients;
-                    const ingredientIn = (req.body as IAddIngredientsDTO)
-                        .ingredient;
-                    //If the food already exists in the ingredints list, increase its quantity instead of adding a new object.
-                    const ingredientOld = ingredients.find(
-                        i => i.food === ingredientIn.food
-                    );
-                    if (ingredientOld) {
-                        Meal.updateOne(
-                            { _id: mealId },
-                            {
-                                $inc: {
-                                    "ingredients.$[element].quantity":
-                                        ingredientIn.quantity
-                                }
-                            },
-                            {
-                                arrayFilters: [
-                                    { "element.food": ingredientOld.food }
-                                ]
-                            }
-                        ).exec((err: any, meal: any) => {
-                            if (err) {
-                                res.send(err);
-                            }
-                            res.json(meal);
-                        });
+                    const { ingredient } = (req.body as IAddIngredientDTO);
+                    const oldIndex = meal.ingredients.findIndex(i => i.food == ingredient.food);
+                    //If ingredient already exists, increase its quantity
+                    if (oldIndex > -1) {
+                        const ingredientOld = meal.ingredients[oldIndex];
+                        ingredientOld.quantity = ingredientOld.quantity.valueOf() +
+                            ingredient.quantity.valueOf();
                     } else {
-                        Meal.findOneAndUpdate(
-                            { _id: mealId },
-                            { $push: { ingredients: ingredientIn } },
-                            (err, meal) => {
-                                if (err) {
-                                    res.send(err);
-                                }
-                                res.json(meal);
-                            }
-                        );
+                        meal.ingredients.push(ingredient);
                     }
+
+                    meal.save((err, updatedMeal) => {
+                        if (err)
+                            res.send(err);
+
+                        res.send(updatedMeal);
+                    })
                 } else {
                     res.status(400).send({
                         error: `No meal found with id:${mealId}`
@@ -159,48 +136,26 @@ export default (app: Router) => {
                     res.send(err);
                 }
                 if (meal) {
-                    //Ingredients array of the meal
-                    const ingredients = (JSON.parse(
-                        JSON.stringify(meal)
-                    ) as IMealModel).ingredients;
-                    const ingredientIn = (req.body as IUpdateIngredientDTO)
-                        .ingredient;
-                    //Ensure that quantity cannot be less than 0
-                    if (ingredientIn.quantity && ingredientIn.quantity < 0) {
-                        ingredientIn.quantity = 0;
-                    }
-                    const ingredientInId = (req.body as IUpdateIngredientDTO)
-                        .ingredientId;
-                    //Find if the food already exists in the ingredints list. If so, increase its quantity.
-                    const ingredientOld = ingredients.find(
-                        i => i._id === ingredientInId
-                    );
-                    if (ingredientOld) {
-                        const ingredientUpdated = {
-                            ...ingredientOld,
-                            ...ingredientIn
-                        };
-                        Meal.update(
-                            { _id: req.params.Id },
-                            {
-                                $set: {
-                                    "ingredients.$[element]": ingredientUpdated
-                                }
-                            },
-                            {
-                                arrayFilters: [
-                                    { "element._id": ingredientOld._id }
-                                ]
-                            }
-                        ).exec((err: any, meal: any) => {
-                            if (err) {
+                    const { ingredientId, ingredient } = req.body as IUpdateIngredientDTO;
+                    const oldIndex = meal.ingredients.findIndex(i => i._id == ingredientId);
+                    //If ingredient exists in indredients list, update it. O/W respond with error message
+                    if (oldIndex > -1) {
+                        const ingredientOld = meal.ingredients[oldIndex];
+                        const { food, quantity } = ingredient;
+                        if (food)
+                            ingredientOld.food = food;
+                        if (quantity && quantity > 0)
+                            ingredientOld.quantity = quantity;
+
+                        meal.save((err, updatedMeal) => {
+                            if (err)
                                 res.send(err);
-                            }
-                            res.json(meal);
-                        });
+
+                            res.send(updatedMeal);
+                        })
                     } else {
                         res.status(400).send({
-                            error: "Food not found in ingredient list."
+                            error: `In the Ingredients list of meal: ${meal.name}, there is no such ingredient with id: ${ingredientId}`
                         });
                     }
                 } else {
@@ -212,6 +167,9 @@ export default (app: Router) => {
         );
     });
 
+    /**
+     * Deleted the meal with Id (soft delete)
+     */
     route.post("/delete/:Id", (req: Request, res: Response) => {
         const mealId = req.params.Id;
         //Check if meal exists
@@ -221,21 +179,15 @@ export default (app: Router) => {
                 if (err) {
                     res.send(err);
                 }
+                console.log("Delete request, meal: ", meal);
                 if (meal) {
-                    Meal.findByIdAndUpdate(
-                        mealId,
-                        { $set: { isDeleted: true } },
-                        (err, meal) => {
-                            if (err) {
-                                res.send(err);
-                            }
-                            //Send respond with updated meal
-                            res.status(200).send({
-                                ...JSON.parse(JSON.stringify(meal)),
-                                isDeleted: true
-                            });
-                        }
-                    );
+                    meal.isDeleted = true;
+                    meal.save((err, deletedMeal) => {
+                        if (err)
+                            res.send(err)
+
+                        res.send(deletedMeal);
+                    })
                 } else {
                     res.status(400).send({
                         error: `No meal found with id: ${mealId}`
@@ -245,6 +197,9 @@ export default (app: Router) => {
         );
     });
 
+    /**
+     * Restores the meal with Id (if soft deleted previously)
+     */
     route.post("/restore/:Id", (req: Request, res: Response) => {
         const mealId = req.params.Id;
         //Check if meal exists
@@ -255,23 +210,16 @@ export default (app: Router) => {
                     res.send(err);
                 }
                 if (meal) {
-                    Meal.findByIdAndUpdate(
-                        mealId,
-                        { $set: { isDeleted: false } },
-                        (err, meal) => {
-                            if (err) {
-                                res.status(400).send(err);
-                            }
-                            //Send respond with updated meal
-                            res.status(200).send({
-                                ...JSON.parse(JSON.stringify(meal)),
-                                isDeleted: false
-                            });
-                        }
-                    );
+                    meal.isDeleted = false;
+                    meal.save((err, restoredMeal) => {
+                        if (err)
+                            res.send(err);
+
+                        res.send(restoredMeal);
+                    })
                 } else {
                     res.status(400).send({
-                        error: `No meal found with id: ${mealId}`
+                        error: `No deleted meal found with id: ${mealId}`
                     });
                 }
             }

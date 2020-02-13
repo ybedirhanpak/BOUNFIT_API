@@ -1,45 +1,47 @@
 import mongoose, { Schema } from "mongoose";
-import { BaseModel, Models } from "./base";
+import { BaseModel, BaseOptions, Models } from "./base";
 import { IUserModel } from "../interfaces/user";
 
 const UserSchema = new Schema({
     ...BaseModel,
     passwordHash: {
-        type:String,
-        required:true
+        type: String,
+        required: true
     },
     passwordSalt: {
-        type:String,
-        required:true
+        type: String,
+        required: true
     },
     email: {
-        type:String,
-        required:true
+        type: String,
+        required: true
     },
     foods: {
-        type:[{
+        type: [{
             type: Schema.Types.ObjectId,
-            ref: Models.food    
+            ref: Models.food
         }],
-        required:true,
-        default:[]
+        required: true,
+        default: []
     },
     meals: {
-        type:[{
+        type: [{
             type: Schema.Types.ObjectId,
-            ref: Models.meal    
+            ref: Models.meal
         }],
-        required:true,
-        default:[]
+        required: true,
+        default: []
     },
     dailyPlans: {
-        type:[{
+        type: [{
             type: Schema.Types.ObjectId,
-            ref: Models.dailyPlan    
+            ref: Models.dailyPlan
         }],
-        required:true,
-        default:[]
+        required: true,
+        default: []
     }
+}, {
+    ...BaseOptions
 });
 
 export default mongoose.model<IUserModel & mongoose.Document>(

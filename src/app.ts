@@ -9,7 +9,13 @@ import routes from "./api";
 const app = express();
 
 //Connect the database
-mongoose.connect(config.databaseURL, { useFindAndModify: false });
+mongoose.connect(config.databaseURL, { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true })
+    .then(() => {
+        console.log(`🐍  Database connection established. 🐍`);
+    })
+    .catch((error) => {
+        console.log("Database connection error: ", error);
+    })
 
 //Middleware
 app.use(bodyParser.urlencoded({ extended: true }));

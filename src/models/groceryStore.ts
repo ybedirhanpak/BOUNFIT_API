@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { BaseModel, Models } from "./base";
+import { BaseModel, BaseOptions, Models } from "./base";
 import { IGroceryStoreModel } from "../interfaces/groceryStore";
 
 const GroceryStoreSchema = new Schema({
@@ -14,6 +14,8 @@ const GroceryStoreSchema = new Schema({
         required: true,
         default: []
     }
+}, {
+    ...BaseOptions
 });
 
 export default mongoose.model<IGroceryStoreModel & mongoose.Document>(

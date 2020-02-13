@@ -1,4 +1,4 @@
-import { SchemaDefinition } from "mongoose";
+import { SchemaDefinition, SchemaOptions } from "mongoose";
 export const BaseModel: SchemaDefinition = {
     name: {
         type: String,
@@ -10,6 +10,10 @@ export const BaseModel: SchemaDefinition = {
         default: false
     }
 };
+
+export const BaseOptions: SchemaOptions = {
+    timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" }
+}
 
 export enum Models {
     food = "Food",

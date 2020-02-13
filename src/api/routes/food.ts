@@ -85,23 +85,13 @@ export default (app: Router) => {
                     res.send(err);
                 }
                 if (food) {
-                    //Combine old food and foodIn
-                    const updatedFood = {
-                        ...JSON.parse(JSON.stringify(food)),
-                        ...(req.body as IFoodUpdateDTO)
-                    };
-                    console.log("updatedFood", updatedFood);
-                    Food.findOneAndUpdate(
-                        { _id: foodId },
-                        updatedFood,
-                        (err, food) => {
-                            if (err) {
-                                res.send(err);
-                            }
-                            //Return updated food
-                            res.json(updatedFood);
-                        }
-                    );
+                    food.set((req.body) as IFoodUpdateDTO);
+                    food.save((err, updatedFood) => {
+                        if (err)
+                            res.send(err);
+
+                        res.send(updatedFood);
+                    })
                 } else {
                     res.status(400).send({
                         error: `No food found with id: `,
@@ -119,26 +109,19 @@ export default (app: Router) => {
         const foodId = req.params.Id;
         //Find by Id
         Food.findOne(
-            { $and: [{ isDeleted: { $eq: false } }, { _id: foodId}] },
+            { $and: [{ isDeleted: { $eq: false } }, { _id: foodId }] },
             (err, food) => {
                 if (err) {
                     res.send(err);
                 }
                 if (food) {
-                    Food.findOneAndUpdate(
-                        { _id: foodId },
-                        { $set: { isDeleted: true } },
-                        (err, food) => {
-                            if (err) {
-                                res.status(400).send(err);
-                            }
-                            //Return updated food
-                            res.json({
-                                ...JSON.parse(JSON.stringify(food)),
-                                isDeleted: true
-                            });
-                        }
-                    )
+                    food.isDeleted = true;
+                    food.save((err, deletedFood) => {
+                        if (err)
+                            res.send(err);
+
+                        res.send(deletedFood);
+                    })
                 } else {
                     res.status(400).send({
                         error: `No food with id: ${foodId}`
@@ -155,29 +138,22 @@ export default (app: Router) => {
         const foodId = req.params.Id;
         //Find by Id
         Food.findOne(
-            { $and: [{ isDeleted: { $eq: true } }, { _id: req.params.Id }] },
+            { $and: [{ isDeleted: { $eq: true } }, { _id: foodId }] },
             (err, food) => {
                 if (err) {
                     res.send(err);
                 }
                 if (food) {
-                    Food.findOneAndUpdate(
-                        { _id: foodId },
-                        { $set: { isDeleted: false } },
-                        (err, food) => {
-                            if (err) {
-                                res.send(err);
-                            }
-                            //Return updated food
-                            res.json({
-                                ...JSON.parse(JSON.stringify(food)),
-                                isDeleted: false
-                            });
-                        }
-                    );
+                    food.isDeleted = false;
+                    food.save((err, restoredFood) => {
+                        if (err)
+                            res.send(err);
+
+                        res.send(restoredFood);
+                    })
                 } else {
                     res.status(400).send({
-                        error: `No food with id: ${foodId}`
+                        error: `No deleted food with id: ${foodId}`
                     });
                 }
             }

@@ -1,7 +1,7 @@
-import { IBaseModel, IBaseCreateDTO, IBaseUpdateDTO } from './base'; 
+import { IBaseModel, IBaseCreateDTO, IBaseUpdateDTO } from './base';
 import { Schema } from 'mongoose';
 
-interface Ingredient {
+export interface Ingredient {
     _id?: Schema.Types.ObjectId,
     quantity: Number,
     food: Schema.Types.ObjectId;
@@ -13,14 +13,14 @@ interface IngredientUpdateDTO {
 }
 
 export interface IMealModel extends IBaseModel {
-    ingredients:[Ingredient]
+    ingredients: [Ingredient]
 }
 
 export interface IMealCreateDTO extends IBaseCreateDTO {
-    ingredients:[Ingredient]
+    ingredients: [Ingredient]
 }
 
-export interface IAddIngredientsDTO {
+export interface IAddIngredientDTO {
     ingredient: Ingredient
 }
 

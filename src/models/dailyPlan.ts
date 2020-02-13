@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { BaseModel, Models } from "./base";
+import { BaseModel, BaseOptions, Models } from "./base";
 import { IDailyPlanModel } from "../interfaces/dailyPlan";
 
 const DailyPlanSchema = new Schema({
@@ -14,6 +14,8 @@ const DailyPlanSchema = new Schema({
         required: true,
         default: []
     }
+}, {
+    ...BaseOptions
 });
 
 export default mongoose.model<IDailyPlanModel & mongoose.Document>(
