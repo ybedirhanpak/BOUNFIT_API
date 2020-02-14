@@ -18,7 +18,7 @@ export default (app: Router) => {
      * Creates new meal
      */
     route.post("/create", (req: Request, res: Response) => {
-        //Get from request
+        //Get from request body
         const mealIn: IMealModel = {
             ...(req.body as IMealCreateDTO),
             isDeleted: false
@@ -37,10 +37,10 @@ export default (app: Router) => {
      */
     route.get("/getAll", (req: Request, res: Response) => {
         //Find all
-        Meal.find({ isDeleted: { $eq: false } })
+        Meal.find({ isDeleted: false })
             .populate({
                 path: "ingredients.food",
-                match: { isDeleted: { $eq: false } }
+                match: { isDeleted: false }
             })
             .exec((err, meals) => {
                 if (err) {

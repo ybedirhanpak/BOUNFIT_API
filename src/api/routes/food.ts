@@ -34,7 +34,7 @@ export default (app: Router) => {
      */
     route.get("/getAll", (req: Request, res: Response) => {
         //Find all
-        Food.find({ isDeleted: { $eq: false } }, (err, foods) => {
+        Food.find({ isDeleted: false }, (err, foods) => {
             if (err) {
                 res.send(err);
             }
@@ -47,7 +47,7 @@ export default (app: Router) => {
      */
     route.get("/getAllDeleted", (req: Request, res: Response) => {
         //Find all
-        Food.find({ isDeleted: { $eq: true } }, (err, foods) => {
+        Food.find({ isDeleted: true }, (err, foods) => {
             if (err) {
                 res.send(err);
             }
@@ -62,7 +62,7 @@ export default (app: Router) => {
         const foodId = req.params.Id;
         //Find by Id
         Food.findOne(
-            { $and: [{ isDeleted: { $eq: false } }, { _id: foodId }] },
+            { $and: [{ isDeleted: false }, { _id: foodId }] },
             (err, food) => {
                 if (err) {
                     res.send(err);
@@ -79,7 +79,7 @@ export default (app: Router) => {
         const foodId = req.params.Id;
         //Find by Id
         Food.findOne(
-            { $and: [{ isDeleted: { $eq: false } }, { _id: foodId }] },
+            { $and: [{ isDeleted: false }, { _id: foodId }] },
             (err, food) => {
                 if (err) {
                     res.send(err);
@@ -109,7 +109,7 @@ export default (app: Router) => {
         const foodId = req.params.Id;
         //Find by Id
         Food.findOne(
-            { $and: [{ isDeleted: { $eq: false } }, { _id: foodId }] },
+            { $and: [{ isDeleted: false }, { _id: foodId }] },
             (err, food) => {
                 if (err) {
                     res.send(err);
@@ -138,7 +138,7 @@ export default (app: Router) => {
         const foodId = req.params.Id;
         //Find by Id
         Food.findOne(
-            { $and: [{ isDeleted: { $eq: true } }, { _id: foodId }] },
+            { $and: [{ isDeleted: true }, { _id: foodId }] },
             (err, food) => {
                 if (err) {
                     res.send(err);
