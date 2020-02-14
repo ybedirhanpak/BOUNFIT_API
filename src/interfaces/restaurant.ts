@@ -7,8 +7,8 @@ export interface IRestaurantModel extends IBaseModel {
 }
 
 export interface ICreateResturantDTO extends IBaseCreateDTO {
-    foods?: [Schema.Types.ObjectId];
-    meals?: [Schema.Types.ObjectId];
+    foods: [Schema.Types.ObjectId];
+    meals: [Schema.Types.ObjectId];
 }
 
 export interface IAddRemoveFoodDTO {
