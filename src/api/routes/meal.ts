@@ -22,7 +22,12 @@ export default (app: Router) => {
             const meal = await MealService.create(createDTO);
             res.status(200).send(meal);
         } catch (err) {
-            res.status(500).send(errors.INTERNAL_ERROR(err));
+            if (err.name === errorNames.FOOD_NOT_FOUND ||
+                err.name === errorNames.INVALID_INGREDIENT) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
+            }
         }
     });
 
@@ -108,11 +113,9 @@ export default (app: Router) => {
             const meal = await MealService.addIngredient(req.params.Id, addIngredientDTO);
             res.status(200).send(meal);
         } catch (err) {
-            if (err.name === errorNames.MEAL_NOT_FOUND) {
-                res.status(400).send(err);
-            } else if (err.name === errorNames.FOOD_NOT_FOUND) {
-                res.status(400).send(err);
-            } else if (err.name === errorNames.VALIDATION_ERROR) {
+            if (err.name === errorNames.MEAL_NOT_FOUND ||
+                err.name === errorNames.FOOD_NOT_FOUND ||
+                err.name === errorNames.INVALID_INGREDIENT) {
                 res.status(400).send(err);
             } else {
                 res.status(500).send(errors.INTERNAL_ERROR(err));
@@ -129,11 +132,9 @@ export default (app: Router) => {
             const meal = await MealService.updateIngredient(req.params.Id, updateIngredientDTO);
             res.status(200).send(meal);
         } catch (err) {
-            if (err.name === errorNames.MEAL_NOT_FOUND) {
-                res.status(400).send(err);
-            } else if (err.name === errorNames.INGREDIENT_NOT_FOUND) {
-                res.status(400).send(err);
-            } else if (err.name === errorNames.VALIDATION_ERROR) {
+            if (err.name === errorNames.MEAL_NOT_FOUND ||
+                err.name === errorNames.FOOD_NOT_FOUND ||
+                err.name === errorNames.INVALID_INGREDIENT) {
                 res.status(400).send(err);
             } else {
                 res.status(500).send(errors.INTERNAL_ERROR(err));
@@ -150,11 +151,9 @@ export default (app: Router) => {
             const meal = await MealService.removeIngredient(req.params.Id, removeIngredientDTO);
             res.status(200).send(meal);
         } catch (err) {
-            if (err.name === errorNames.MEAL_NOT_FOUND) {
-                res.status(400).send(err);
-            } else if (err.name === errorNames.INGREDIENT_NOT_FOUND) {
-                res.status(400).send(err);
-            } else if (err.name === errorNames.VALIDATION_ERROR) {
+            if (err.name === errorNames.MEAL_NOT_FOUND ||
+                err.name === errorNames.FOOD_NOT_FOUND ||
+                err.name === errorNames.INVALID_INGREDIENT) {
                 res.status(400).send(err);
             } else {
                 res.status(500).send(errors.INTERNAL_ERROR(err));

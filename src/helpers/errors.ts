@@ -15,6 +15,7 @@ export enum errorNames {
     MEAL_NOT_FOUND = "MealNotFound",
     MEAL_ALREADY_EXISTS = "MealAlreadyExists",
     INGREDIENT_NOT_FOUND = "IngredientNotFound",
+    INVALID_INGREDIENT = "InvalidIngredient",
     DAILY_PLAN_NOT_FOUND = "DailyPlanNotFound",
     RESTAURANT_NOT_FOUND = "RestaurantNotFound",
     GROCERY_STORE_NOT_FOUND = "GroceryStoreNotFound"
@@ -27,7 +28,6 @@ export default {
     VALIDATION_ERROR: (cause?: any) => {
         return Exception("ValidationError", "Validation error.", cause);
     },
-    //Foods
     FOOD_NOT_FOUND: (cause?: any) => {
         return Exception(errorNames.FOOD_NOT_FOUND, "Food with given id not found", cause);
     },
@@ -37,7 +37,6 @@ export default {
     INVALID_FOOD: (cause?: any) => {
         return Exception(errorNames.INVALID_FOOD, "Given food is invalid.", cause);
     },
-    //Meals
     MEAL_NOT_FOUND: (cause?: any) => {
         return Exception(errorNames.MEAL_NOT_FOUND, "Meal with given id not found.", cause);
     },
@@ -46,6 +45,9 @@ export default {
     },
     INGREDIENT_NOT_FOUND: (cause?: any) => {
         return Exception(errorNames.INGREDIENT_NOT_FOUND, "Ingredient with given id not found in list", cause);
+    },
+    INVALID_INGREDIENT: (cause?: any) => {
+        return Exception(errorNames.INVALID_INGREDIENT, "Invalid Ingredient", cause);
     },
     DAILY_PLAN_NOT_FOUND: (cause?: any) => {
         return Exception(errorNames.DAILY_PLAN_NOT_FOUND, "Daily plan with given id not found", cause);

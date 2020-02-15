@@ -5,30 +5,33 @@ import {
     IMealCreateDTO,
     IAddIngredientDTO,
     IUpdateIngredientDTO,
-    Ingredient,
-    IRemoveIngredientDTO
+    IRemoveIngredientDTO,
+    Ingredient
 } from "../interfaces/meal";
 import errors from "../helpers/errors";
 import FoodService from "../services/food";
-
-export const isMealValid = (meal: Schema.Types.ObjectId): boolean => {
-    let result = false;
-    Meal.exists({ $and: [{ isDeleted: false }, { _id: meal }] }, (err, res) => {
-        if (!err)
-            result = res;
-    });
-    return result;
-}
+import { isNumber } from "util";
 
 const exists = async (meal: Schema.Types.ObjectId): Promise<boolean> => {
     return Meal.exists({ $and: [{ isDeleted: false }, { _id: meal }] });
 }
 
-const create = async (mealDTO: IMealCreateDTO): Promise<IMealModel> => {
+const create = async (mealCreateDTO: IMealCreateDTO): Promise<IMealModel> => {
     const mealIn: IMealModel = {
-        ...mealDTO,
+        ...mealCreateDTO,
         isDeleted: false
     };
+
+    mealCreateDTO.ingredients.forEach((ingredient: Ingredient) => {
+        if (!FoodService.exists(ingredient.food)) {
+            throw errors.FOOD_NOT_FOUND(`Food with id: ${ingredient.food} doesn't exist.`);
+        }
+
+        if (ingredient.quantity && ingredient.quantity < 0) {
+            throw errors.INVALID_INGREDIENT("Ingredient quantity cannot be less than 0");
+        }
+    });
+
     return new Meal(mealIn).save();
 }
 
@@ -45,7 +48,7 @@ const getById = async (mealId: string): Promise<IMealModel> => {
         { $and: [{ isDeleted: false }, { _id: mealId }] }
     )
     if (!meal)
-        throw errors.MEAL_NOT_FOUND();
+        throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
 
     return meal;
 }
@@ -55,7 +58,7 @@ const deleteById = async (mealId: string): Promise<IMealModel> => {
         { $and: [{ isDeleted: false }, { _id: mealId }] }
     )
     if (!meal)
-        throw errors.MEAL_NOT_FOUND();
+        throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
 
     meal.isDeleted = true;
     return meal.save();
@@ -81,13 +84,17 @@ const addIngredient = async (mealId: string, addIngredientDTO: IAddIngredientDTO
 
     const { ingredient } = addIngredientDTO;
     if (!ingredient)
-        throw errors.VALIDATION_ERROR("Ingredient object is missing in request.");
+        throw errors.INVALID_INGREDIENT("Ingredient object is missing in request.");
 
     if (!ingredient.food)
-        throw errors.VALIDATION_ERROR("Food is missing in request");
+        throw errors.INVALID_INGREDIENT("Food in ingredient object is missing.");
 
-    if (!ingredient.quantity || ingredient.quantity <= 0) {
-        throw errors.VALIDATION_ERROR("Quantity is missing or non-positive number");
+    if (!ingredient.quantity) {
+        throw errors.INVALID_INGREDIENT("Quantity in ingredient object is missing.");
+    }
+
+    if (ingredient.quantity <= 0) {
+        throw errors.INVALID_INGREDIENT("Quantity cannot be less than zero.");
     }
 
     const foodExists = await FoodService.exists(ingredient.food);
@@ -99,8 +106,8 @@ const addIngredient = async (mealId: string, addIngredientDTO: IAddIngredientDTO
     //If ingredient already exists, increase its quantity
     if (oldIndex > -1) {
         const ingredientOld = meal.ingredients[oldIndex];
-        ingredientOld.quantity = ingredientOld.quantity.valueOf() +
-            ingredient.quantity.valueOf();
+        ingredientOld.quantity = parseFloat(ingredientOld.quantity.valueOf().toString()) +
+            parseFloat(ingredient.quantity.valueOf().toString());
     } else {
         meal.ingredients.push(ingredient);
     }
@@ -118,16 +125,16 @@ const updateIngredient = async (mealId: string, updateIngredientDTO: IUpdateIngr
 
     const { ingredientId, ingredient } = updateIngredientDTO;
     if (!ingredient)
-        throw errors.VALIDATION_ERROR("Ingredient object is missing in request.");
+        throw errors.INVALID_INGREDIENT("Ingredient object is missing in request.");
 
     if (!ingredientId)
-        throw errors.VALIDATION_ERROR("Ingredient id is missing in request.");
+        throw errors.INVALID_INGREDIENT("Ingredient id is missing in request.");
 
     const oldIndex = meal.ingredients.findIndex(i => i._id == ingredientId);
 
     //If ingredient doesn't exists in the list, throw error
     if (oldIndex === -1)
-        throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredientId}` +
+        throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredientId} ` +
             `doesn't exist in ingredients list of meal: ${meal.name}.`);
 
     const ingredientOld = meal.ingredients[oldIndex];
@@ -141,8 +148,12 @@ const updateIngredient = async (mealId: string, updateIngredientDTO: IUpdateIngr
         ingredientOld.food = food;
     }
 
-    if (quantity && quantity > 0)
+    if (quantity) {
+        if (quantity < 0)
+            throw errors.INVALID_INGREDIENT("Quantity cannot be less than zero.");
+
         ingredientOld.quantity = quantity;
+    }
 
     return meal.save();
 }
@@ -156,14 +167,15 @@ const removeIngredient = async (mealId: string, removeIngredientDTO: IRemoveIngr
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
 
     const { ingredient } = removeIngredientDTO;
+
     if (!ingredient)
-        throw errors.VALIDATION_ERROR("Ingredient object is missing in request.");
+        throw errors.INVALID_INGREDIENT("Ingredient object is missing in request.");
 
     const oldIndex = meal.ingredients.findIndex(i => i._id == ingredient);
 
     //If ingredient doesn't exists in the list, throw error
     if (oldIndex === -1)
-        throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredient}` +
+        throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredient} ` +
             `doesn't exist in ingredients list of meal: ${meal.name}.`);
 
     //Remove ingredient from list
