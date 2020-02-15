@@ -24,6 +24,10 @@ export interface IAddIngredientDTO {
     ingredient: Ingredient
 }
 
+export interface IRemoveIngredientDTO {
+    ingredient: Schema.Types.ObjectId
+}
+
 export interface IUpdateIngredientDTO {
     ingredientId: Schema.Types.ObjectId;
     ingredient: IngredientUpdateDTO
