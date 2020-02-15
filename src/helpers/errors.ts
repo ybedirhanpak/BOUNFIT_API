@@ -13,7 +13,10 @@ export enum errorNames {
     FOOD_ALREADY_EXISTS = "FoodAlreadyExists",
     MEAL_NOT_FOUND = "MealNotFound",
     MEAL_ALREADY_EXISTS = "MealAlreadyExists",
-    INGREDIENT_NOT_FOUND = "IngredientNotFound"
+    INGREDIENT_NOT_FOUND = "IngredientNotFound",
+    DAILY_PLAN_NOT_FOUND = "DailyPlanNotFound",
+    RESTAURANT_NOT_FOUND = "RestaurantNotFound",
+    GROCERY_STORE_NOT_FOUND = "GroceryStoreNotFound"
 }
 
 export default {
@@ -38,6 +41,15 @@ export default {
         return Exception(errorNames.MEAL_ALREADY_EXISTS, "Meal with given id already exists in list.", cause);
     },
     INGREDIENT_NOT_FOUND: (cause?: any) => {
-        return Exception(errorNames.INGREDIENT_NOT_FOUND, "Ingredient not found in list", cause);
-    }
+        return Exception(errorNames.INGREDIENT_NOT_FOUND, "Ingredient with given id not found in list", cause);
+    },
+    DAILY_PLAN_NOT_FOUND: (cause?: any) => {
+        return Exception(errorNames.DAILY_PLAN_NOT_FOUND, "Daily plan with given id not found", cause);
+    },
+    RESTAURANT_NOT_FOUND: (cause?: any) => {
+        return Exception(errorNames.RESTAURANT_NOT_FOUND, "Restaurant with given id not found", cause);
+    },
+    GROCERY_STORE_NOT_FOUND: (cause?: any) => {
+        return Exception(errorNames.GROCERY_STORE_NOT_FOUND, "Grocery store with given id not found", cause);
+    },
 }

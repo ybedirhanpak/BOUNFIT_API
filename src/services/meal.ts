@@ -20,6 +20,10 @@ export const isMealValid = (meal: Schema.Types.ObjectId): boolean => {
     return result;
 }
 
+const exists = async (meal: Schema.Types.ObjectId): Promise<boolean> => {
+    return Meal.exists({ $and: [{ isDeleted: false }, { _id: meal }] });
+}
+
 const create = async (mealDTO: IMealCreateDTO): Promise<IMealModel> => {
     const mealIn: IMealModel = {
         ...mealDTO,
@@ -169,6 +173,7 @@ const removeIngredient = async (mealId: string, removeIngredientDTO: IRemoveIngr
 }
 
 export default {
+    exists,
     create,
     getAll,
     getAllDeleted,
