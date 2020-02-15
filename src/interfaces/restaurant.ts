@@ -6,7 +6,7 @@ export interface IRestaurantModel extends IBaseModel {
     meals: [Schema.Types.ObjectId];
 }
 
-export interface ICreateResturantDTO extends IBaseCreateDTO {
+export interface IRestaurantCreateDTO extends IBaseCreateDTO {
     foods: [Schema.Types.ObjectId];
     meals: [Schema.Types.ObjectId];
 }

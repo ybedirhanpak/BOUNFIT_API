@@ -4,7 +4,6 @@ import {
     IDailyPlanCreateDTO,
     IAddRemoveMealDTO
 } from "../../interfaces/dailyPlan";
-import DailyPlan from "../../models/dailyPlan";
 import errors, { errorNames } from "../../helpers/errors";
 import DailyPlanService from "../../services/dailyPlan";
 

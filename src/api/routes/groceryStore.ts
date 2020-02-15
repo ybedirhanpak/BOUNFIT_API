@@ -4,212 +4,111 @@ import {
     IGroceryStoreCreateDTO,
     IAddRemoveFoodDTO
 } from "../../interfaces/groceryStore";
-import GroceryStore from "../../models/groceryStore";
+import errors, { errorNames } from "../../helpers/errors";
+import GroceryStoreService from "../../services/groceryStore";
 
 const route = Router();
 
 export default (app: Router) => {
     app.use("/groceryStores", route);
 
-    /**
-     * Creates new grocery store
-     */
-    route.post("/create", (req, res) => {
-        //Get from req body
-        const groceryStoreIn: IGroceryStoreModel = {
-            ...(req.body as IGroceryStoreCreateDTO),
-            isDeleted: false
+    route.post("/create", async (req, res) => {
+        try {
+            const createDTO = req.body as IGroceryStoreCreateDTO;
+            const groceryStores = await GroceryStoreService.create(createDTO);
+            res.status(200).send(groceryStores);
+        } catch (err) {
+            res.status(500).send(errors.INTERNAL_ERROR(err));
         }
-        //Save
-        new GroceryStore(groceryStoreIn).save((err, groceryStore) => {
-            if (err)
-                res.send(err);
-
-            res.send(groceryStore);
-        });
     });
 
-    /**
-     * Get all grocery stores
-     */
-    route.get("/getAll", (req, res) => {
-        //Find all 
-        GroceryStore.find({ isDeleted: false })
-            .populate({
-                path: "foods",
-                match: { isDeleted: false }
-            })
-            .exec((err, groceryStores) => {
-                if (err)
-                    res.send(err);
-
-                res.send(groceryStores);
-            });
+    route.get("/getAll", async (req, res) => {
+        try {
+            const groceryStores = await GroceryStoreService.getAll();
+            res.status(200).send(groceryStores);
+        } catch (err) {
+            res.status(500).send(errors.INTERNAL_ERROR(err));
+        }
     });
 
-    /**
-     * Gets all deleted grocery stores
-     */
-    route.get("/getAllDeleted", (req, res) => {
-        //Find all deleted
-        GroceryStore.find({ isDeleted: true }, (err, groceryStores) => {
-            if (err)
-                res.send(err);
+    route.get("/getAllDeleted", async (req, res) => {
+        try {
+            const groceryStores = await GroceryStoreService.getAllDeleted();
+            res.status(200).send(groceryStores);
+        } catch (err) {
+            res.status(500).send(errors.INTERNAL_ERROR())
+        }
+    })
 
-            res.send(groceryStores);
-        });
-    });
-
-    /**
-     * Get grocery store by id
-     */
-    route.get("/get/:Id", (req, res) => {
-        const groceryStoreId = req.params.Id;
-        //Find by id
-        GroceryStore.find(
-            { $and: [{ isDeleted: false }, { _id: groceryStoreId }] }
-        ).populate({
-            path: "foods",
-            match: { isDeleted: false }
-        }).exec((err, groceryStores) => {
-            if (err)
-                res.send(err);
-
-            res.send(groceryStores);
-        });
-    });
-
-    /**
-     * Deletes grocery store
-     */
-    route.post("/delete/:Id", (req, res) => {
-        const groceryStoreId = req.params.Id;
-        //Find by id
-        GroceryStore.findOne(
-            { $and: [{ isDeleted: false }, { _id: groceryStoreId }] },
-            (err, groceryStore) => {
-                if (err)
-                    res.send(err);
-
-                if (groceryStore) {
-                    groceryStore.isDeleted = true;
-                    groceryStore.save((err, groceryStore) => {
-                        if (err)
-                            res.send(err);
-
-                        res.send(groceryStore);
-                    })
-                } else {
-                    res.status(400).send({
-                        error: `No grocery store with id: ${groceryStoreId}`
-                    });
-                }
+    route.get("/get/:Id", async (req, res) => {
+        try {
+            const groceryStore = await GroceryStoreService.getById(req.params.Id);
+            res.status(200).send(groceryStore);
+        } catch (err) {
+            if (err.name === errorNames.GROCERY_STORE_NOT_FOUND) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
             }
-        );
+        }
     });
 
-    /**
-     * Restores deleted grocery store
-     */
-    route.post("/restore/:Id", (req, res) => {
-        const groceryStoreId = req.params.Id;
-        //Find by id
-        GroceryStore.findOne(
-            { $and: [{ isDeleted: true }, { _id: groceryStoreId }] },
-            (err, groceryStore) => {
-                if (err)
-                    res.send(err);
-
-                if (groceryStore) {
-                    groceryStore.isDeleted = false;
-                    groceryStore.save((err, groceryStore) => {
-                        if (err)
-                            res.send(err);
-
-                        res.send(groceryStore);
-                    })
-                } else {
-                    res.status(400).send({
-                        error: `No deleted grocery store with id: ${groceryStoreId}`
-                    });
-                }
+    route.post("/delete/:Id", async (req, res) => {
+        try {
+            const groceryStore = await GroceryStoreService.deleteById(req.params.Id);
+            res.status(200).send(groceryStore);
+        } catch (err) {
+            if (err.name === errorNames.GROCERY_STORE_NOT_FOUND) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
             }
-        );
-    });
+        }
+    })
 
-    /**
-     * Adds food to grocery store
-     */
-    route.post("/addFood/:Id", (req, res) => {
-        const groceryStoreId = req.params.Id;
-        //Find by id
-        GroceryStore.findOne(
-            { $and: [{ isDeleted: false }, { _id: groceryStoreId }] },
-            (err, groceryStore) => {
-                if (err)
-                    res.send(err);
-
-                if (groceryStore) {
-                    const { food } = req.body as IAddRemoveFoodDTO;
-                    const oldIndex = groceryStore.foods.findIndex(f => f == food);
-                    //If food doesn't exist add to list
-                    if (oldIndex === -1) {
-                        groceryStore.foods.push(food);
-                        groceryStore.save((err, groceryStore) => {
-                            if (err)
-                                res.send(err);
-
-                            res.send(groceryStore);
-                        })
-                    } else {
-                        res.status(500).send({
-                            error: `Food: ${food} already exists in list of: ${groceryStore.name}`
-                        })
-                    }
-                } else {
-                    res.status(400).send({
-                        error: `No grocery store found with id: ${groceryStoreId}`
-                    })
-                }
+    route.post("/restore/:Id", async (req, res) => {
+        try {
+            const groceryStore = await GroceryStoreService.restoreById(req.params.Id);
+            res.status(200).send(groceryStore);
+        } catch (err) {
+            if (err.name === errorNames.GROCERY_STORE_NOT_FOUND) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
             }
-        )
-    });
+        }
+    })
 
-    /**
-     * Removes food from grocery store
-     */
-    route.post("/removeFood/:Id", (req, res) => {
-        const groceryStoreId = req.params.Id;
-        //Find by id
-        GroceryStore.findOne(
-            { $and: [{ isDeleted: false }, { _id: groceryStoreId }] },
-            (err, groceryStore) => {
-                if (err)
-                    res.send(err);
-
-                if (groceryStore) {
-                    const { food } = req.body as IAddRemoveFoodDTO;
-                    const oldIndex = groceryStore.foods.findIndex(f => f == food);
-                    //If food exists in the list, remove it
-                    if (oldIndex > -1) {
-                        groceryStore.foods.splice(oldIndex, 1);
-                        groceryStore.save((err, groceryStore) => {
-                            if (err)
-                                res.send(err);
-
-                            res.send(groceryStore);
-                        })
-                    } else {
-                        res.status(500).send({
-                            error: `Food: ${food} doesn't exist in list of: ${groceryStore.name}`
-                        })
-                    }
-                } else {
-                    res.status(400).send({
-                        error: `No grocery store found with id: ${groceryStoreId}`
-                    })
-                }
+    route.post("/addFood/:Id", async (req, res) => {
+        try {
+            const addFoodDTO = req.body as IAddRemoveFoodDTO;
+            const groceryStore = await GroceryStoreService.addFood(req.params.Id, addFoodDTO);
+            res.status(200).send(groceryStore);
+        } catch (err) {
+            if (err.name === errorNames.GROCERY_STORE_NOT_FOUND ||
+                err.name === errorNames.FOOD_NOT_FOUND ||
+                err.name === errorNames.FOOD_ALREADY_EXISTS ||
+                err.name === errorNames.VALIDATION_ERROR) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
             }
-        )
-    });
-}
+        }
+    })
+
+    route.post("/removeFood/:Id", async (req, res) => {
+        try {
+            const removeFoodDTO = req.body as IAddRemoveFoodDTO;
+            const groceryStore = await GroceryStoreService.removeFood(req.params.Id, removeFoodDTO);
+            res.status(200).send(groceryStore);
+        } catch (err) {
+            if (err.name === errorNames.GROCERY_STORE_NOT_FOUND ||
+                err.name === errorNames.FOOD_NOT_FOUND ||
+                err.name === errorNames.VALIDATION_ERROR) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
+            }
+        }
+    })
+};

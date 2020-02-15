@@ -11,6 +11,7 @@ export enum errorNames {
     VALIDATION_ERROR = "ValidationError",
     FOOD_NOT_FOUND = "FoodNotFound",
     FOOD_ALREADY_EXISTS = "FoodAlreadyExists",
+    INVALID_FOOD = "InvalidFood",
     MEAL_NOT_FOUND = "MealNotFound",
     MEAL_ALREADY_EXISTS = "MealAlreadyExists",
     INGREDIENT_NOT_FOUND = "IngredientNotFound",
@@ -32,6 +33,9 @@ export default {
     },
     FOOD_ALREADY_EXISTS: (cause?: any) => {
         return Exception(errorNames.FOOD_ALREADY_EXISTS, "Food with given id already exists in list.", cause);
+    },
+    INVALID_FOOD: (cause?: any) => {
+        return Exception(errorNames.INVALID_FOOD, "Given food is invalid.", cause);
     },
     //Meals
     MEAL_NOT_FOUND: (cause?: any) => {

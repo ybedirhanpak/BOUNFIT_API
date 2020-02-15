@@ -1,244 +1,123 @@
 import { Router } from "express";
 import {
     IRestaurantModel,
-    ICreateResturantDTO,
+    IRestaurantCreateDTO,
     IAddRemoveMealDTO,
     IAddRemoveFoodDTO
 } from "../../interfaces/restaurant";
-
-import Restaurant from "../../models/restaurant";
-
-import { isFoodValid } from "../../services/food";
-import { isMealValid } from "../../services/meal";
+import errors, { errorNames } from "../../helpers/errors";
+import RestaurantService from "../../services/restaurant";
 
 const route = Router();
 
 export default (app: Router) => {
     app.use("/restaurants", route);
 
-    /**
-     * Creates new restaurant
-     */
-    route.post("/create", (req, res) => {
-        const restaurantIn: IRestaurantModel = {
-            ...req.body as ICreateResturantDTO,
-            isDeleted: false
+    route.post("/create", async (req, res) => {
+        try {
+            const createDTO = req.body as IRestaurantCreateDTO;
+            const restaurants = await RestaurantService.create(createDTO);
+            res.status(200).send(restaurants);
+        } catch (err) {
+            res.status(500).send(errors.INTERNAL_ERROR(err));
         }
-        new Restaurant(restaurantIn).save((err, restaurant) => {
-            if (err)
-                res.send(err);
-
-            res.send(restaurant);
-        });
     });
 
-    /**
-     * Gets all restaurants
-     */
-    route.get("/getAll", (req, res) => {
-        //Find all
-        Restaurant.find(
-            { isDeleted: false },
-            (err, restaurants) => {
-                if (err)
-                    res.send(err);
+    route.get("/getAll", async (req, res) => {
+        try {
+            const restaurants = await RestaurantService.getAll();
+            res.status(200).send(restaurants);
+        } catch (err) {
+            res.status(500).send(errors.INTERNAL_ERROR(err));
+        }
+    });
 
-                res.send(restaurants);
+    route.get("/getAllDeleted", async (req, res) => {
+        try {
+            const restaurants = await RestaurantService.getAllDeleted();
+            res.status(200).send(restaurants);
+        } catch (err) {
+            res.status(500).send(errors.INTERNAL_ERROR(err));
+        }
+    });
+
+    route.get("/get/:Id", async (req, res) => {
+        try {
+            const restaurant = await RestaurantService.getById(req.params.Id);
+            res.status(200).send(restaurant);
+        } catch (err) {
+            if (err.name === errorNames.RESTAURANT_NOT_FOUND) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
             }
-        );
+        }
     });
 
-    /**
-     * Gets all deleted restaurants
-     */
-    route.get("/getAllDeleted", (req, res) => {
-        //Find all deleted
-        Restaurant.find(
-            { isDeleted: true },
-            (err, restaurants) => {
-                if (err)
-                    res.send(err);
-
-                res.send(restaurants);
+    route.post("/addFood/:Id", async (req, res) => {
+        try {
+            const addFoodDTO = req.body as IAddRemoveFoodDTO;
+            const restaurant = await RestaurantService.addFood(req.params.Id, addFoodDTO);
+            res.status(200).send(restaurant);
+        } catch (err) {
+            if (err.name === errorNames.RESTAURANT_NOT_FOUND ||
+                err.name === errorNames.FOOD_NOT_FOUND ||
+                err.name === errorNames.FOOD_ALREADY_EXISTS ||
+                err.name === errorNames.VALIDATION_ERROR) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
             }
-        );
+        }
     });
 
-    /**
-     * Gets restaurant by its id
-     */
-    route.get("/get/:Id", (req, res) => {
-        const restaurantId = req.params.Id;
-        Restaurant.findOne(
-            { $and: [{ isDeleted: false }, { _id: restaurantId }] }
-        ).populate({
-            path: "foods",
-            match: { isDeleted: false }
-        }).populate({
-            path: "meals",
-            match: { isDeleted: false }
-        }).exec((err, restaurant) => {
-            if (err)
-                res.send(err);
-
-            res.send(restaurant);
-        })
-    });
-
-    /**
-     * Adds food to restaurant
-     */
-    route.post("/addFood/:Id", (req, res) => {
-        const restaurantId = req.params.Id;
-        Restaurant.findOne(
-            { $and: [{ isDeleted: false }, { _id: restaurantId }] },
-            (err, restaurant) => {
-                if (err)
-                    res.send(err);
-                if (restaurant) {
-                    const { food } = req.body as IAddRemoveFoodDTO;
-                    const oldIndex = restaurant.foods.findIndex(f => f == food);
-                    //If food doesn't exist in list add it
-                    if (oldIndex === -1) {
-                        if (!isFoodValid(food)) {
-                            res.status(500).send({
-                                error: `Food: ${food} is not valid.`
-                            })
-                        }
-                        restaurant.foods.push(food);
-                        restaurant.save((err, restaurant) => {
-                            if (err)
-                                res.send(err);
-
-                            res.send(restaurant);
-                        });
-                    } else {
-                        res.status(500).send({
-                            error: `Food: ${food} already exists in restaurant: ${restaurant.name}`
-                        });
-                    }
-                } else {
-                    res.status(400).send({
-                        error: `No restaurant found with id: ${restaurantId}`
-                    })
-                }
+    route.post("/removeFood/:Id", async (req, res) => {
+        try {
+            const removeFoodDTO = req.body as IAddRemoveFoodDTO;
+            const restaurant = await RestaurantService.removeFood(req.params.Id, removeFoodDTO);
+            res.status(200).send(restaurant);
+        } catch (err) {
+            if (err.name === errorNames.RESTAURANT_NOT_FOUND ||
+                err.name === errorNames.FOOD_NOT_FOUND ||
+                err.name === errorNames.VALIDATION_ERROR) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
             }
-        );
+        }
     });
 
-    /**
-     * Removes food from restaurant
-     */
-    route.post("/removeFood/:Id", (req, res) => {
-        const restaurantId = req.params.Id;
-        Restaurant.findOne(
-            { $and: [{ isDeleted: false }, { _id: restaurantId }] },
-            (err, restaurant) => {
-                if (err)
-                    res.send(err);
-
-                if (restaurant) {
-                    const { food } = req.body as IAddRemoveFoodDTO;
-                    const oldIndex = restaurant.foods.findIndex(f => f == food);
-                    //If food already exists in the list, remove it
-                    if (oldIndex > -1) {
-                        restaurant.foods.splice(oldIndex, 1);
-                        restaurant.save((err, restaurant) => {
-                            if (err)
-                                res.send(err);
-
-                            res.send(restaurant);
-                        })
-                    } else {
-                        res.status(500).send({
-                            error: `Food: ${food} doesn't exists in restaurant: ${restaurant.name}`
-                        })
-                    }
-                } else {
-                    res.status(400).send({
-                        error: `No restaurant found with id: ${restaurantId}`
-                    })
-                }
+    route.post("/addMeal/:Id", async (req, res) => {
+        try {
+            const addMealDTO = req.body as IAddRemoveMealDTO;
+            const restaurant = await RestaurantService.addMeal(req.params.Id, addMealDTO);
+            res.status(200).send(restaurant);
+        } catch (err) {
+            if (err.name === errorNames.RESTAURANT_NOT_FOUND ||
+                err.name === errorNames.MEAL_NOT_FOUND ||
+                err.name === errorNames.MEAL_ALREADY_EXISTS ||
+                err.name === errorNames.VALIDATION_ERROR) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
             }
-        );
+        }
     });
 
-    /**
-     * Adds meal to restaurant
-     */
-    route.post("/addMeal/:Id", (req, res) => {
-        const restaurantId = req.params.Id;
-        Restaurant.findOne(
-            { $and: [{ isDeleted: false }, { _id: restaurantId }] },
-            (err, restaurant) => {
-                if (err)
-                    res.send(err);
-                if (restaurant) {
-                    const { meal } = req.body as IAddRemoveMealDTO;
-                    const oldIndex = restaurant.foods.findIndex(m => m == meal);
-                    //If meal doesn't exist in list add it
-                    if (oldIndex === -1) {
-                        if (!isMealValid(meal)) {
-                            res.status(500).send({
-                                error: `Meal: ${meal} is not valid.`
-                            })
-                        }
-                        restaurant.meals.push(meal);
-                        restaurant.save((err, restaurant) => {
-                            if (err)
-                                res.send(err);
-
-                            res.send(restaurant);
-                        });
-                    } else {
-                        res.status(500).send({
-                            error: `Meal: ${meal} already exists in restaurant: ${restaurant.name}`
-                        });
-                    }
-                } else {
-                    res.status(400).send({
-                        error: `No restaurant found with id: ${restaurantId}`
-                    })
-                }
+    route.post("/removeMeal/:Id", async (req, res) => {
+        try {
+            const removeMealDTO = req.body as IAddRemoveMealDTO;
+            const restaurant = await RestaurantService.removeMeal(req.params.Id, removeMealDTO);
+            res.status(200).send(restaurant);
+        } catch (err) {
+            if (err.name === errorNames.RESTAURANT_NOT_FOUND ||
+                err.name === errorNames.MEAL_NOT_FOUND ||
+                err.name === errorNames.VALIDATION_ERROR) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
             }
-        );
-    });
-
-    /**
-     * Removes food from restaurant
-     */
-    route.post("/removeMeal/:Id", (req, res) => {
-        const restaurantId = req.params.Id;
-        Restaurant.findOne(
-            { $and: [{ isDeleted: false }, { _id: restaurantId }] },
-            (err, restaurant) => {
-                if (err)
-                    res.send(err);
-
-                if (restaurant) {
-                    const { meal } = req.body as IAddRemoveMealDTO;
-                    const oldIndex = restaurant.meals.findIndex(f => f == meal);
-                    //If meal already exists in the list, remove it
-                    if (oldIndex > -1) {
-                        restaurant.meals.splice(oldIndex, 1);
-                        restaurant.save((err, restaurant) => {
-                            if (err)
-                                res.send(err);
-
-                            res.send(restaurant);
-                        });
-                    } else {
-                        res.status(500).send({
-                            error: `Meal: ${meal} doesn't exists in restaurant: ${restaurant.name}`
-                        });
-                    }
-                } else {
-                    res.status(400).send({
-                        error: `No restaurant found with id: ${restaurantId}`
-                    });
-                }
-            }
-        );
+        }
     });
 
 }

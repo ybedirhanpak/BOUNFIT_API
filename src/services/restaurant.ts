@@ -2,7 +2,7 @@ import { Schema } from "mongoose";
 import Restaurant from "../models/restaurant";
 import {
     IRestaurantModel,
-    ICreateResturantDTO,
+    IRestaurantCreateDTO,
     IAddRemoveFoodDTO,
     IAddRemoveMealDTO
 } from "../interfaces/restaurant";
@@ -14,7 +14,7 @@ const exists = async (restaurantId: string | Schema.Types.ObjectId): Promise<boo
     return await Restaurant.exists({ $and: [{ isDeleted: false }, { _id: restaurantId }] });
 }
 
-const create = async (restaurantDTO: ICreateResturantDTO): Promise<IRestaurantModel> => {
+const create = async (restaurantDTO: IRestaurantCreateDTO): Promise<IRestaurantModel> => {
     const restaurantIn: IRestaurantModel = {
         ...restaurantDTO,
         isDeleted: false

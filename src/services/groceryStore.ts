@@ -57,7 +57,7 @@ const restoreById = async (groceryStoreId: string): Promise<IGroceryStoreModel> 
     return groceryStore.save();
 }
 
-const addMeal = async (groceryStoreId: string, addFoodDTO: IAddRemoveFoodDTO): Promise<IGroceryStoreModel> => {
+const addFood = async (groceryStoreId: string, addFoodDTO: IAddRemoveFoodDTO): Promise<IGroceryStoreModel> => {
     const groceryStore = await GroceryStore.findOne(
         { $and: [{ isDeleted: false }, { _id: groceryStoreId }] }
     );
@@ -81,7 +81,7 @@ const addMeal = async (groceryStoreId: string, addFoodDTO: IAddRemoveFoodDTO): P
     return groceryStore.save();
 }
 
-const removeMeal = async (groceryStoreId: string, removeFoodDTO: IAddRemoveFoodDTO): Promise<IGroceryStoreModel> => {
+const removeFood = async (groceryStoreId: string, removeFoodDTO: IAddRemoveFoodDTO): Promise<IGroceryStoreModel> => {
     const groceryStore = await GroceryStore.findOne(
         { $and: [{ isDeleted: false }, { _id: groceryStoreId }] }
     );
@@ -113,6 +113,6 @@ export default {
     getById,
     deleteById,
     restoreById,
-    addMeal,
-    removeMeal
+    addFood,
+    removeFood
 }

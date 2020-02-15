@@ -7,33 +7,36 @@ import {
 } from "../interfaces/food";
 import errors from "../helpers/errors";
 
-export const isFoodValid = (food: Schema.Types.ObjectId): boolean => {
-    let result = false;
-    Food.exists({ $and: [{ isDeleted: false }, { _id: food }] }, (err, res) => {
-        if (!err)
-            result = res;
-    });
-    return result;
-}
-
 const exists = async (foodId: string | Schema.Types.ObjectId): Promise<boolean> => {
-    return await Food.exists({ $and: [{ isDeleted: false }, { _id: foodId }] });
+    return Food.exists({ $and: [{ isDeleted: false }, { _id: foodId }] });
 }
 
 const create = async (foodDTO: IFoodCreateDTO): Promise<IFoodModel> => {
+    if (foodDTO.protein < 0)
+        throw errors.INVALID_FOOD("Protein cannot be less than zero.");
+    if (foodDTO.carb < 0)
+        throw errors.INVALID_FOOD("Carb cannot be less than zero.");
+    if (foodDTO.fat < 0)
+        throw errors.INVALID_FOOD("Fat cannot be less than zero.");
+    if (foodDTO.calories < 0)
+        throw errors.INVALID_FOOD("Calories cannot be less than zero.");
+    if (foodDTO.name.length > 100) {
+        throw errors.INVALID_FOOD("Name cannot exceed 100 characters.");
+    }
+
     const foodIn: IFoodModel = {
         ...foodDTO,
         isDeleted: false
     };
-    return await new Food(foodIn).save();
+    return new Food(foodIn).save();
 }
 
 const getAll = async (): Promise<IFoodModel[]> => {
-    return await Food.find({ isDeleted: false });
+    return Food.find({ isDeleted: false });
 }
 
 const getAllDeleted = async (): Promise<IFoodModel[]> => {
-    return await Food.find({ isDeleted: true });
+    return Food.find({ isDeleted: true });
 }
 
 const getById = async (foodId: string): Promise<IFoodModel> => {
@@ -51,6 +54,19 @@ const updateById = async (foodId: string, foodUpdateDTO: IFoodUpdateDTO): Promis
     )
     if (!food)
         throw errors.FOOD_NOT_FOUND();
+
+    if (foodUpdateDTO.protein && foodUpdateDTO.protein < 0)
+        throw errors.INVALID_FOOD("Protein cannot be less than zero.");
+    if (foodUpdateDTO.carb && foodUpdateDTO.carb < 0)
+        throw errors.INVALID_FOOD("Carb cannot be less than zero.");
+    if (foodUpdateDTO.fat && foodUpdateDTO.fat < 0)
+        throw errors.INVALID_FOOD("Fat cannot be less than zero.");
+    if (foodUpdateDTO.calories && foodUpdateDTO.calories < 0)
+        throw errors.INVALID_FOOD("Calories cannot be less than zero.");
+    if (foodUpdateDTO.name && foodUpdateDTO.name.length > 100) {
+        throw errors.INVALID_FOOD("Name cannot exceed 100 characters.");
+    }
+
     food.set(foodUpdateDTO);
     return food.save();
 }
