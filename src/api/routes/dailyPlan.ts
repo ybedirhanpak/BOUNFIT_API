@@ -1,6 +1,5 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import {
-    IDailyPlanModel,
     IDailyPlanCreateDTO,
     IAddRemoveMealDTO
 } from "../../interfaces/dailyPlan";

@@ -13,9 +13,6 @@ const route = Router();
 export default (app: Router) => {
     app.use("/meals", route);
 
-    /**
-     * Creates new meal
-     */
     route.post("/create", async (req: Request, res: Response) => {
         try {
             const createDTO = req.body as IMealCreateDTO;
@@ -31,9 +28,6 @@ export default (app: Router) => {
         }
     });
 
-    /**
-     * Gets all meals
-     */
     route.get("/getAll", async (req: Request, res: Response) => {
         try {
             const meals = await MealService.getAll();
@@ -43,9 +37,6 @@ export default (app: Router) => {
         }
     });
 
-    /**
-     * Gets all deleted meals
-     */
     route.get("/getAllDeleted", async (req: Request, res: Response) => {
         try {
             const meals = await MealService.getAllDeleted();
@@ -55,9 +46,6 @@ export default (app: Router) => {
         }
     });
 
-    /**
-     * Gets meal with given Id
-     */
     route.get("/get/:Id", async (req: Request, res: Response) => {
         try {
             const meal = await MealService.getById(req.params.Id);
@@ -71,10 +59,6 @@ export default (app: Router) => {
         }
     });
 
-
-    /**
-     * Deleted the meal with Id (soft delete)
-     */
     route.post("/delete/:Id", async (req: Request, res: Response) => {
         try {
             const meal = await MealService.deleteById(req.params.Id);
@@ -88,9 +72,6 @@ export default (app: Router) => {
         }
     });
 
-    /**
-     * Restores the meal with Id (if soft deleted previously)
-     */
     route.post("/restore/:Id", async (req: Request, res: Response) => {
         try {
             const meal = await MealService.restoreById(req.params.Id);
@@ -104,9 +85,6 @@ export default (app: Router) => {
         }
     });
 
-    /**
-     * Adds food into the ingredient list of the given meal
-     */
     route.post("/addIngredient/:Id", async (req: Request, res: Response) => {
         try {
             const addIngredientDTO = req.body as IAddIngredientDTO;
@@ -123,9 +101,6 @@ export default (app: Router) => {
         }
     });
 
-    /**
-     * Updates the quantity of food in the given meal Id and
-     */
     route.post("/updateIngredient/:Id", async (req: Request, res: Response) => {
         try {
             const updateIngredientDTO = req.body as IUpdateIngredientDTO;
@@ -142,9 +117,6 @@ export default (app: Router) => {
         }
     });
 
-    /**
-     * Removes the ingredient from ingredients list
-     */
     route.post("/removeIngredient/:Id", async (req: Request, res: Response) => {
         try {
             const removeIngredientDTO = req.body as IRemoveIngredientDTO;

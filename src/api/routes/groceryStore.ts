@@ -1,6 +1,5 @@
 import { Router } from "express";
 import {
-    IGroceryStoreModel,
     IGroceryStoreCreateDTO,
     IAddRemoveFoodDTO
 } from "../../interfaces/groceryStore";

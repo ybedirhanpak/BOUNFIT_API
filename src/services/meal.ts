@@ -10,10 +10,9 @@ import {
 } from "../interfaces/meal";
 import errors from "../helpers/errors";
 import FoodService from "../services/food";
-import { isNumber } from "util";
 
 const exists = async (meal: Schema.Types.ObjectId): Promise<boolean> => {
-    return Meal.exists({ $and: [{ isDeleted: false }, { _id: meal }] });
+    return await Meal.exists({ $and: [{ isDeleted: false }, { _id: meal }] });
 }
 
 const create = async (mealCreateDTO: IMealCreateDTO): Promise<IMealModel> => {
@@ -21,26 +20,27 @@ const create = async (mealCreateDTO: IMealCreateDTO): Promise<IMealModel> => {
         ...mealCreateDTO,
         isDeleted: false
     };
-
-    mealCreateDTO.ingredients.forEach((ingredient: Ingredient) => {
-        if (!FoodService.exists(ingredient.food)) {
-            throw errors.FOOD_NOT_FOUND(`Food with id: ${ingredient.food} doesn't exist.`);
+    //Check if there are any invalid foods.
+    let invalidFood = null;
+    for (let i = 0; i < mealCreateDTO.ingredients.length; i++) {
+        const foodExists = await FoodService.exists(mealCreateDTO.ingredients[i].food);
+        if (!foodExists) {
+            invalidFood = mealCreateDTO.ingredients[i].food;
         }
+    }
 
-        if (ingredient.quantity && ingredient.quantity < 0) {
-            throw errors.INVALID_INGREDIENT("Ingredient quantity cannot be less than 0");
-        }
-    });
+    if (invalidFood)
+        throw errors.FOOD_NOT_FOUND(`Food with id: ${invalidFood} doesn't exist.`);
 
     return new Meal(mealIn).save();
 }
 
 const getAll = async (): Promise<IMealModel[]> => {
-    return await Meal.find({ isDeleted: false });
+    return Meal.find({ isDeleted: false });
 }
 
 const getAllDeleted = async (): Promise<IMealModel[]> => {
-    return await Meal.find({ isDeleted: true });
+    return Meal.find({ isDeleted: true });
 }
 
 const getById = async (mealId: string): Promise<IMealModel> => {

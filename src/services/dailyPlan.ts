@@ -9,7 +9,7 @@ import errors from "../helpers/errors";
 import MealService from "../services/meal";
 
 const exists = async (dailyPlanId: string | Schema.Types.ObjectId): Promise<boolean> => {
-    return await DailyPlan.exists({ $and: [{ isDeleted: false }, { _id: dailyPlanId }] });
+    return DailyPlan.exists({ $and: [{ isDeleted: false }, { _id: dailyPlanId }] });
 }
 
 const create = async (dailyPlanDTO: IDailyPlanCreateDTO): Promise<IDailyPlanModel> => {
@@ -17,15 +17,28 @@ const create = async (dailyPlanDTO: IDailyPlanCreateDTO): Promise<IDailyPlanMode
         ...dailyPlanDTO,
         isDeleted: false
     };
-    return await new DailyPlan(dailyPlanIn).save();
+
+    //Check if there are any invalid meals.
+    let invalidMeal = null;
+    for (let i = 0; i < dailyPlanIn.meals.length; i++) {
+        const mealExists = await MealService.exists(dailyPlanIn.meals[i]);
+        if (!mealExists) {
+            invalidMeal = dailyPlanIn.meals[i];
+        }
+    }
+
+    if (invalidMeal)
+        throw errors.MEAL_NOT_FOUND(`Meal with id: ${invalidMeal} doesn't exists.`);
+
+    return new DailyPlan(dailyPlanIn).save();
 }
 
 const getAll = async (): Promise<IDailyPlanModel[]> => {
-    return await DailyPlan.find({ isDeleted: false });
+    return DailyPlan.find({ isDeleted: false });
 }
 
 const getAllDeleted = async (): Promise<IDailyPlanModel[]> => {
-    return await DailyPlan.find({ isDeleted: true });
+    return DailyPlan.find({ isDeleted: true });
 }
 
 const getById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
