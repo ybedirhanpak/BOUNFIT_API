@@ -1,32 +1,9 @@
 import mongoose from "mongoose";
 import config from "../config";
-import { Mockgoose } from "mockgoose";
 
-export const connectDatabase = async () => {
-
-    if (process.env.NODE_ENV === "test") {
-        const mockgoose = new Mockgoose(mongoose);
-        mockgoose.prepareStorage()
-            .then(() => {
-                mongoose.connect(
-                    config.databaseURL,
-                    { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true }
-                )
-                    .then(() => {
-                        console.log(`################################################\n` +
-                            `     🐍  Database connection established. 🐍\n` +
-                            `################################################\n`
-                        );
-                    })
-                    .catch((error) => {
-                        console.log(`################################################\n` +
-                            `     ❌  Database connection error ${error} ❌\n` +
-                            `################################################\n`
-                        );
-                    })
-            })
-    } else {
-        return mongoose.connect(
+export const connectDatabase = () => {
+    return new Promise((resolve, reject) => {
+        mongoose.connect(
             config.databaseURL,
             { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true }
         )
@@ -35,18 +12,34 @@ export const connectDatabase = async () => {
                     `     🐍  Database connection established. 🐍\n` +
                     `################################################\n`
                 );
+                resolve();
             })
             .catch((error) => {
                 console.log(`################################################\n` +
                     `     ❌  Database connection error ${error} ❌\n` +
                     `################################################\n`
                 );
-            })
-    }
-
+                reject();
+            });
+    });
 }
 
 export const closeDatabase = async () => {
-    mongoose.disconnect();
+    return new Promise((resolve, reject) => {
+        mongoose.disconnect()
+            .then(() => {
+                console.log(`################################################\n` +
+                    `     🐍  Database disconnected successfully. 🐍\n` +
+                    `################################################\n`
+                );
+                resolve();
+            }).catch((error) => {
+                console.log(`################################################\n` +
+                    `     ❌  Error occured when database tried to disconnect: ${error} ❌\n` +
+                    `################################################\n`
+                );
+                reject();
+            })
+    });
 }
 
