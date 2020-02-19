@@ -10,8 +10,23 @@ import errors from "../helpers/errors";
 import MealService from "../services/meal";
 import FoodService from "../services/food";
 
+const QUERIES = {
+    GET_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
+    GET_DELETED_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
+    NOT_DELETED: { isDeleted: false },
+    DELETED: { isDeleted: true },
+    POPULATE_FOODS: {
+        path: "foods",
+        match: { isDeleted: false },
+    },
+    POPULATE_MEALS: {
+        path: "meals",
+        match: { isDeleted: false }
+    }
+}
+
 const exists = async (restaurantId: string | Schema.Types.ObjectId): Promise<boolean> => {
-    return await Restaurant.exists({ $and: [{ isDeleted: false }, { _id: restaurantId }] });
+    return await Restaurant.exists(QUERIES.GET_BY_ID(restaurantId));
 }
 
 const create = async (restaurantDTO: IRestaurantCreateDTO): Promise<IRestaurantModel> => {
@@ -19,20 +34,47 @@ const create = async (restaurantDTO: IRestaurantCreateDTO): Promise<IRestaurantM
         ...restaurantDTO,
         isDeleted: false
     };
+
+    let invalidFood = null;
+    for (let i = 0; i < restaurantIn.foods.length; i++) {
+        const foodExists = await FoodService.exists(restaurantIn.foods[i]);
+        if (!foodExists) {
+            invalidFood = restaurantIn.foods[i];
+            break;
+        }
+    }
+
+    let invalidMeal = null;
+    for (let i = 0; i < restaurantIn.meals.length; i++) {
+        const mealExists = await MealService.exists(restaurantIn.meals[i]);
+        if (!mealExists) {
+            invalidMeal = restaurantIn.meals[i];
+            break;
+        }
+    }
+
+    if (invalidFood)
+        throw errors.FOOD_NOT_FOUND(`Food with id: ${invalidFood} doesn't exist.`);
+
+    if (invalidMeal)
+        throw errors.MEAL_NOT_FOUND(`Meal with id: ${invalidMeal} doesn't exist.`);
+
     return await new Restaurant(restaurantIn).save();
 }
 
 const getAll = async (): Promise<IRestaurantModel[]> => {
-    return await Restaurant.find({ isDeleted: false });
+    return await Restaurant.find(QUERIES.NOT_DELETED)
+        .populate(QUERIES.POPULATE_FOODS)
+        .populate(QUERIES.POPULATE_MEALS);
 }
 
 const getAllDeleted = async (): Promise<IRestaurantModel[]> => {
-    return await Restaurant.find({ isDeleted: true });
+    return await Restaurant.find(QUERIES.DELETED);
 }
 
 const getById = async (restaurantId: string): Promise<IRestaurantModel> => {
     const restaurant = await Restaurant.findOne(
-        { $and: [{ isDeleted: false }, { _id: restaurantId }] }
+        QUERIES.GET_BY_ID(restaurantId)
     )
     if (!restaurant)
         throw errors.RESTAURANT_NOT_FOUND();
@@ -41,7 +83,7 @@ const getById = async (restaurantId: string): Promise<IRestaurantModel> => {
 
 const deleteById = async (restaurantId: string): Promise<IRestaurantModel> => {
     const restaurant = await Restaurant.findOne(
-        { $and: [{ isDeleted: false }, { _id: restaurantId }] }
+        QUERIES.GET_BY_ID(restaurantId)
     )
     if (!restaurant)
         throw errors.RESTAURANT_NOT_FOUND();
@@ -51,7 +93,7 @@ const deleteById = async (restaurantId: string): Promise<IRestaurantModel> => {
 
 const restoreById = async (restaurantId: string): Promise<IRestaurantModel> => {
     const restaurant = await Restaurant.findOne(
-        { $and: [{ isDeleted: true }, { _id: restaurantId }] }
+        QUERIES.GET_DELETED_BY_ID(restaurantId)
     )
     if (!restaurant)
         throw errors.RESTAURANT_NOT_FOUND();
@@ -61,7 +103,7 @@ const restoreById = async (restaurantId: string): Promise<IRestaurantModel> => {
 
 const addMeal = async (restaurantId: string, addMealDTO: IAddRemoveMealDTO): Promise<IRestaurantModel> => {
     const restaurant = await Restaurant.findOne(
-        { $and: [{ isDeleted: false }, { _id: restaurantId }] }
+        QUERIES.GET_BY_ID(restaurantId)
     );
 
     if (!restaurant)
@@ -71,7 +113,8 @@ const addMeal = async (restaurantId: string, addMealDTO: IAddRemoveMealDTO): Pro
     if (!meal)
         throw errors.VALIDATION_ERROR("Meal is missing in request.");
 
-    if (!MealService.exists(meal))
+    const mealExists = await MealService.exists(meal);
+    if (!mealExists)
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${meal} doesn't exist`);
 
     const oldIndex = restaurant.meals.findIndex(m => m == meal);
@@ -85,7 +128,7 @@ const addMeal = async (restaurantId: string, addMealDTO: IAddRemoveMealDTO): Pro
 
 const removeMeal = async (restaurantId: string, removeMealDTO: IAddRemoveMealDTO): Promise<IRestaurantModel> => {
     const restaurant = await Restaurant.findOne(
-        { $and: [{ isDeleted: false }, { _id: restaurantId }] }
+        QUERIES.GET_BY_ID(restaurantId)
     );
 
     if (!restaurant)
@@ -95,7 +138,8 @@ const removeMeal = async (restaurantId: string, removeMealDTO: IAddRemoveMealDTO
     if (!meal)
         throw errors.VALIDATION_ERROR("Meal is missing in request.");
 
-    if (!MealService.exists(meal))
+    const mealExists = await MealService.exists(meal);
+    if (!mealExists)
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${meal} doesn't exist`);
 
     const oldIndex = restaurant.meals.findIndex(m => m == meal);
@@ -109,7 +153,7 @@ const removeMeal = async (restaurantId: string, removeMealDTO: IAddRemoveMealDTO
 
 const addFood = async (restaurantId: string, addFoodDTO: IAddRemoveFoodDTO): Promise<IRestaurantModel> => {
     const restaurant = await Restaurant.findOne(
-        { $and: [{ isDeleted: false }, { _id: restaurantId }] }
+        QUERIES.GET_BY_ID(restaurantId)
     );
 
     if (!restaurant)
@@ -119,7 +163,8 @@ const addFood = async (restaurantId: string, addFoodDTO: IAddRemoveFoodDTO): Pro
     if (!food)
         throw errors.VALIDATION_ERROR("Food is missing in request.");
 
-    if (!FoodService.exists(food))
+    const foodExists = await FoodService.exists(food);
+    if (!foodExists)
         throw errors.FOOD_NOT_FOUND(`Food with id: ${food} doesn't exist`);
 
     const oldIndex = restaurant.foods.findIndex(m => m == food);
@@ -133,7 +178,7 @@ const addFood = async (restaurantId: string, addFoodDTO: IAddRemoveFoodDTO): Pro
 
 const removeFood = async (restaurantId: string, removeFoodDTO: IAddRemoveFoodDTO): Promise<IRestaurantModel> => {
     const restaurant = await Restaurant.findOne(
-        { $and: [{ isDeleted: false }, { _id: restaurantId }] }
+        QUERIES.GET_BY_ID(restaurantId)
     );
 
     if (!restaurant)
@@ -143,7 +188,8 @@ const removeFood = async (restaurantId: string, removeFoodDTO: IAddRemoveFoodDTO
     if (!food)
         throw errors.VALIDATION_ERROR("Food is missing in request.");
 
-    if (!FoodService.exists(food))
+    const foodExists = await FoodService.exists(food);
+    if (!foodExists)
         throw errors.FOOD_NOT_FOUND(`Food with id: ${food} doesn't exist`);
 
     const oldIndex = restaurant.foods.findIndex(m => m == food);

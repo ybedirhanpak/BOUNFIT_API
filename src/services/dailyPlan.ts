@@ -9,8 +9,8 @@ import errors from "../helpers/errors";
 import MealService from "../services/meal";
 
 const QUERIES = {
-    GET_BY_ID: (id: any) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
-    GET_DELETED_BY_ID: (id: any) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
+    GET_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
+    GET_DELETED_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
     NOT_DELETED: { isDeleted: false },
     DELETED: { isDeleted: true },
     POPULATE_ALL: {
@@ -62,7 +62,7 @@ const getAllDeleted = async (): Promise<IDailyPlanModel[]> => {
     return DailyPlan.find(QUERIES.DELETED);
 }
 
-const getById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
+const getById = async (dailyPlanId: string | Schema.Types.ObjectId): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
         QUERIES.GET_BY_ID(dailyPlanId)
     ).populate(QUERIES.POPULATE_ALL);
@@ -72,7 +72,7 @@ const getById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
     return dailyPlan;
 }
 
-const deleteById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
+const deleteById = async (dailyPlanId: string | Schema.Types.ObjectId): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
         QUERIES.GET_BY_ID(dailyPlanId)
     )
@@ -82,7 +82,7 @@ const deleteById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
     return dailyPlan.save();
 }
 
-const restoreById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
+const restoreById = async (dailyPlanId: string | Schema.Types.ObjectId): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
         QUERIES.GET_DELETED_BY_ID(dailyPlanId)
     )
@@ -92,7 +92,7 @@ const restoreById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
     return dailyPlan.save();
 }
 
-const addMeal = async (dailyPlanId: string, addMealDTO: IAddRemoveMealDTO): Promise<IDailyPlanModel> => {
+const addMeal = async (dailyPlanId: string | Schema.Types.ObjectId, addMealDTO: IAddRemoveMealDTO): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
         QUERIES.GET_BY_ID(dailyPlanId)
     );
@@ -104,7 +104,8 @@ const addMeal = async (dailyPlanId: string, addMealDTO: IAddRemoveMealDTO): Prom
     if (!meal)
         throw errors.VALIDATION_ERROR("Meal is missing in request.");
 
-    if (!MealService.exists(meal))
+    const mealExists = await MealService.exists(meal);
+    if (!mealExists)
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${meal} doesn't exist`);
 
     const oldIndex = dailyPlan.meals.findIndex(m => m == meal);
@@ -116,7 +117,7 @@ const addMeal = async (dailyPlanId: string, addMealDTO: IAddRemoveMealDTO): Prom
     return dailyPlan.save();
 }
 
-const removeMeal = async (dailyPlanId: string, removeMealDTO: IAddRemoveMealDTO): Promise<IDailyPlanModel> => {
+const removeMeal = async (dailyPlanId: string | Schema.Types.ObjectId, removeMealDTO: IAddRemoveMealDTO): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
         QUERIES.GET_BY_ID(dailyPlanId)
     );
@@ -128,7 +129,8 @@ const removeMeal = async (dailyPlanId: string, removeMealDTO: IAddRemoveMealDTO)
     if (!meal)
         throw errors.VALIDATION_ERROR("Meal is missing in request.");
 
-    if (!MealService.exists(meal))
+    const mealExists = await MealService.exists(meal);
+    if (!mealExists)
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${meal} doesn't exist`);
 
     const oldIndex = dailyPlan.meals.findIndex(m => m == meal);

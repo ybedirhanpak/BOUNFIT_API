@@ -17,7 +17,11 @@ export default (app: Router) => {
             const groceryStores = await GroceryStoreService.create(createDTO);
             res.status(200).send(groceryStores);
         } catch (err) {
-            res.status(500).send(errors.INTERNAL_ERROR(err));
+            if (err.name === errorNames.FOOD_NOT_FOUND) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
+            }
         }
     });
 

@@ -19,7 +19,12 @@ export default (app: Router) => {
             const restaurants = await RestaurantService.create(createDTO);
             res.status(200).send(restaurants);
         } catch (err) {
-            res.status(500).send(errors.INTERNAL_ERROR(err));
+            if (err.name === errorNames.FOOD_NOT_FOUND ||
+                err.name === errorNames.MEAL_NOT_FOUND) {
+                res.status(400).send(err);
+            } else {
+                res.status(500).send(errors.INTERNAL_ERROR(err));
+            }
         }
     });
 

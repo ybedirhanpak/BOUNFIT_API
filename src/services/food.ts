@@ -7,8 +7,15 @@ import {
 } from "../interfaces/food";
 import errors from "../helpers/errors";
 
+const QUERIES = {
+    GET_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
+    GET_DELETED_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
+    NOT_DELETED: { isDeleted: false },
+    DELETED: { isDeleted: true }
+}
+
 const exists = async (foodId: string | Schema.Types.ObjectId): Promise<boolean> => {
-    return Food.exists({ $and: [{ isDeleted: false }, { _id: foodId }] });
+    return Food.exists(QUERIES.GET_BY_ID(foodId));
 }
 
 const create = async (foodDTO: IFoodCreateDTO): Promise<IFoodModel> => {
@@ -32,25 +39,26 @@ const create = async (foodDTO: IFoodCreateDTO): Promise<IFoodModel> => {
 }
 
 const getAll = async (): Promise<IFoodModel[]> => {
-    return Food.find({ isDeleted: false });
+    return Food.find(QUERIES.NOT_DELETED);
 }
 
 const getAllDeleted = async (): Promise<IFoodModel[]> => {
-    return Food.find({ isDeleted: true });
+    return Food.find(QUERIES.DELETED);
 }
 
-const getById = async (foodId: string): Promise<IFoodModel> => {
+const getById = async (foodId: string | Schema.Types.ObjectId): Promise<IFoodModel> => {
     const food = await Food.findOne(
-        { $and: [{ isDeleted: false }, { _id: foodId }] }
+        QUERIES.GET_BY_ID(foodId)
     )
     if (!food)
         throw errors.FOOD_NOT_FOUND();
     return food;
 }
 
-const updateById = async (foodId: string, foodUpdateDTO: IFoodUpdateDTO): Promise<IFoodModel> => {
+const updateById = async (foodId: string | Schema.Types.ObjectId,
+    foodUpdateDTO: IFoodUpdateDTO): Promise<IFoodModel> => {
     const food = await Food.findOne(
-        { $and: [{ isDeleted: false }, { _id: foodId }] }
+        QUERIES.GET_BY_ID(foodId)
     )
     if (!food)
         throw errors.FOOD_NOT_FOUND();
@@ -71,9 +79,9 @@ const updateById = async (foodId: string, foodUpdateDTO: IFoodUpdateDTO): Promis
     return food.save();
 }
 
-const deleteById = async (foodId: string): Promise<IFoodModel> => {
+const deleteById = async (foodId: string | Schema.Types.ObjectId): Promise<IFoodModel> => {
     const food = await Food.findOne(
-        { $and: [{ isDeleted: false }, { _id: foodId }] }
+        QUERIES.GET_BY_ID(foodId)
     )
     if (!food)
         throw errors.FOOD_NOT_FOUND();
@@ -81,9 +89,9 @@ const deleteById = async (foodId: string): Promise<IFoodModel> => {
     return food.save();
 }
 
-const restoreById = async (foodId: string): Promise<IFoodModel> => {
+const restoreById = async (foodId: string | Schema.Types.ObjectId): Promise<IFoodModel> => {
     const food = await Food.findOne(
-        { $and: [{ isDeleted: true }, { _id: foodId }] }
+        QUERIES.GET_DELETED_BY_ID(foodId)
     )
     if (!food)
         throw errors.FOOD_NOT_FOUND();

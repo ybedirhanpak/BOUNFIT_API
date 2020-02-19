@@ -10,8 +10,19 @@ import {
 import errors from "../helpers/errors";
 import FoodService from "../services/food";
 
-const exists = async (meal: Schema.Types.ObjectId): Promise<boolean> => {
-    return await Meal.exists({ $and: [{ isDeleted: false }, { _id: meal }] });
+const QUERIES = {
+    GET_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
+    GET_DELETED_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
+    NOT_DELETED: { isDeleted: false },
+    DELETED: { isDeleted: true },
+    POPULATE_FOODS: {
+        path: "foods",
+        match: { isDeleted: false },
+    }
+}
+
+const exists = async (mealId: string | Schema.Types.ObjectId): Promise<boolean> => {
+    return await Meal.exists(QUERIES.GET_BY_ID(mealId));
 }
 
 const create = async (mealCreateDTO: IMealCreateDTO): Promise<IMealModel> => {
@@ -36,24 +47,18 @@ const create = async (mealCreateDTO: IMealCreateDTO): Promise<IMealModel> => {
 }
 
 const getAll = async (): Promise<IMealModel[]> => {
-    return Meal.find({ isDeleted: false })
-        .populate({
-            path: "ingredients.food",
-            match: { isDeleted: false }
-        });
+    return Meal.find(QUERIES.NOT_DELETED)
+        .populate(QUERIES.POPULATE_FOODS);
 }
 
 const getAllDeleted = async (): Promise<IMealModel[]> => {
     return Meal.find({ isDeleted: true });
 }
 
-const getById = async (mealId: string): Promise<IMealModel> => {
+const getById = async (mealId: string | Schema.Types.ObjectId): Promise<IMealModel> => {
     const meal = await Meal.findOne(
-        { $and: [{ isDeleted: false }, { _id: mealId }] }
-    ).populate({
-        path: "ingredients.food",
-        match: { isDeleted: false }
-    });
+        QUERIES.GET_BY_ID(mealId)
+    ).populate(QUERIES.POPULATE_FOODS);
 
     if (!meal)
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
@@ -61,9 +66,9 @@ const getById = async (mealId: string): Promise<IMealModel> => {
     return meal;
 }
 
-const deleteById = async (mealId: string): Promise<IMealModel> => {
+const deleteById = async (mealId: string | Schema.Types.ObjectId): Promise<IMealModel> => {
     const meal = await Meal.findOne(
-        { $and: [{ isDeleted: false }, { _id: mealId }] }
+        QUERIES.GET_BY_ID(mealId)
     )
     if (!meal)
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
@@ -72,9 +77,9 @@ const deleteById = async (mealId: string): Promise<IMealModel> => {
     return meal.save();
 }
 
-const restoreById = async (mealId: string): Promise<IMealModel> => {
+const restoreById = async (mealId: string | Schema.Types.ObjectId): Promise<IMealModel> => {
     const meal = await Meal.findOne(
-        { $and: [{ isDeleted: true }, { _id: mealId }] }
+        QUERIES.GET_DELETED_BY_ID(mealId)
     )
     if (!meal)
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
@@ -83,9 +88,10 @@ const restoreById = async (mealId: string): Promise<IMealModel> => {
     return meal.save();
 }
 
-const addIngredient = async (mealId: string, addIngredientDTO: IAddIngredientDTO): Promise<IMealModel> => {
+const addIngredient = async (mealId: string | Schema.Types.ObjectId,
+    addIngredientDTO: IAddIngredientDTO): Promise<IMealModel> => {
     const meal = await Meal.findOne(
-        { $and: [{ isDeleted: { $eq: false } }, { _id: mealId }] }
+        QUERIES.GET_BY_ID(mealId)
     );
     if (!meal)
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
@@ -123,9 +129,10 @@ const addIngredient = async (mealId: string, addIngredientDTO: IAddIngredientDTO
     return meal.save();
 }
 
-const updateIngredient = async (mealId: string, updateIngredientDTO: IUpdateIngredientDTO): Promise<IMealModel> => {
+const updateIngredient = async (mealId: string | Schema.Types.ObjectId,
+    updateIngredientDTO: IUpdateIngredientDTO): Promise<IMealModel> => {
     const meal = await Meal.findOne(
-        { $and: [{ isDeleted: { $eq: false } }, { _id: mealId }] }
+        QUERIES.GET_BY_ID(mealId)
     );
 
     if (!meal)
@@ -166,9 +173,10 @@ const updateIngredient = async (mealId: string, updateIngredientDTO: IUpdateIngr
     return meal.save();
 }
 
-const removeIngredient = async (mealId: string, removeIngredientDTO: IRemoveIngredientDTO): Promise<IMealModel> => {
+const removeIngredient = async (mealId: string | Schema.Types.ObjectId,
+    removeIngredientDTO: IRemoveIngredientDTO): Promise<IMealModel> => {
     const meal = await Meal.findOne(
-        { $and: [{ isDeleted: { $eq: false } }, { _id: mealId }] }
+        QUERIES.GET_BY_ID(mealId)
     );
 
     if (!meal)
