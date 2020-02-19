@@ -17,6 +17,19 @@ const create = async (groceryStoreDTO: IGroceryStoreCreateDTO): Promise<IGrocery
         ...groceryStoreDTO,
         isDeleted: false
     };
+
+    let invalidFood = null;
+    for (let i = 0; i < groceryStoreIn.foods.length; i++) {
+        const foodExists = await FoodService.exists(groceryStoreIn.foods[i]);
+        if (!foodExists) {
+            invalidFood = groceryStoreIn.foods[i];
+            break;
+        }
+    }
+
+    if (invalidFood)
+        throw errors.FOOD_NOT_FOUND(`Food with id: ${invalidFood} doesn't exist.`);
+
     return await new GroceryStore(groceryStoreIn).save();
 }
 

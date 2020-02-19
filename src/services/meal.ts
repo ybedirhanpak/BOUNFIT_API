@@ -5,8 +5,7 @@ import {
     IMealCreateDTO,
     IAddIngredientDTO,
     IUpdateIngredientDTO,
-    IRemoveIngredientDTO,
-    Ingredient
+    IRemoveIngredientDTO
 } from "../interfaces/meal";
 import errors from "../helpers/errors";
 import FoodService from "../services/food";
@@ -26,6 +25,7 @@ const create = async (mealCreateDTO: IMealCreateDTO): Promise<IMealModel> => {
         const foodExists = await FoodService.exists(mealCreateDTO.ingredients[i].food);
         if (!foodExists) {
             invalidFood = mealCreateDTO.ingredients[i].food;
+            break;
         }
     }
 
@@ -36,7 +36,11 @@ const create = async (mealCreateDTO: IMealCreateDTO): Promise<IMealModel> => {
 }
 
 const getAll = async (): Promise<IMealModel[]> => {
-    return Meal.find({ isDeleted: false });
+    return Meal.find({ isDeleted: false })
+        .populate({
+            path: "ingredients.food",
+            match: { isDeleted: false }
+        });
 }
 
 const getAllDeleted = async (): Promise<IMealModel[]> => {
@@ -46,7 +50,11 @@ const getAllDeleted = async (): Promise<IMealModel[]> => {
 const getById = async (mealId: string): Promise<IMealModel> => {
     const meal = await Meal.findOne(
         { $and: [{ isDeleted: false }, { _id: mealId }] }
-    )
+    ).populate({
+        path: "ingredients.food",
+        match: { isDeleted: false }
+    });
+
     if (!meal)
         throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
 

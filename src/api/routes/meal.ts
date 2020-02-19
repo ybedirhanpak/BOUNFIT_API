@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import {
     IMealCreateDTO,
     IAddIngredientDTO,
@@ -13,7 +13,7 @@ const route = Router();
 export default (app: Router) => {
     app.use("/meals", route);
 
-    route.post("/create", async (req: Request, res: Response) => {
+    route.post("/create", async (req, res) => {
         try {
             const createDTO = req.body as IMealCreateDTO;
             const meal = await MealService.create(createDTO);
@@ -28,7 +28,7 @@ export default (app: Router) => {
         }
     });
 
-    route.get("/getAll", async (req: Request, res: Response) => {
+    route.get("/getAll", async (req, res) => {
         try {
             const meals = await MealService.getAll();
             res.status(200).send(meals);
@@ -37,7 +37,7 @@ export default (app: Router) => {
         }
     });
 
-    route.get("/getAllDeleted", async (req: Request, res: Response) => {
+    route.get("/getAllDeleted", async (req, res) => {
         try {
             const meals = await MealService.getAllDeleted();
             res.status(200).send(meals);
@@ -46,7 +46,7 @@ export default (app: Router) => {
         }
     });
 
-    route.get("/get/:Id", async (req: Request, res: Response) => {
+    route.get("/get/:Id", async (req, res) => {
         try {
             const meal = await MealService.getById(req.params.Id);
             res.status(200).send(meal);
@@ -59,7 +59,7 @@ export default (app: Router) => {
         }
     });
 
-    route.post("/delete/:Id", async (req: Request, res: Response) => {
+    route.post("/delete/:Id", async (req, res) => {
         try {
             const meal = await MealService.deleteById(req.params.Id);
             res.status(200).send(meal);
@@ -72,7 +72,7 @@ export default (app: Router) => {
         }
     });
 
-    route.post("/restore/:Id", async (req: Request, res: Response) => {
+    route.post("/restore/:Id", async (req, res) => {
         try {
             const meal = await MealService.restoreById(req.params.Id);
             res.status(200).send(meal);
@@ -85,7 +85,7 @@ export default (app: Router) => {
         }
     });
 
-    route.post("/addIngredient/:Id", async (req: Request, res: Response) => {
+    route.post("/addIngredient/:Id", async (req, res) => {
         try {
             const addIngredientDTO = req.body as IAddIngredientDTO;
             const meal = await MealService.addIngredient(req.params.Id, addIngredientDTO);
@@ -101,7 +101,7 @@ export default (app: Router) => {
         }
     });
 
-    route.post("/updateIngredient/:Id", async (req: Request, res: Response) => {
+    route.post("/updateIngredient/:Id", async (req, res) => {
         try {
             const updateIngredientDTO = req.body as IUpdateIngredientDTO;
             const meal = await MealService.updateIngredient(req.params.Id, updateIngredientDTO);
@@ -117,7 +117,7 @@ export default (app: Router) => {
         }
     });
 
-    route.post("/removeIngredient/:Id", async (req: Request, res: Response) => {
+    route.post("/removeIngredient/:Id", async (req, res) => {
         try {
             const removeIngredientDTO = req.body as IRemoveIngredientDTO;
             const meal = await MealService.removeIngredient(req.params.Id, removeIngredientDTO);

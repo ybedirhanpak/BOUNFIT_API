@@ -8,8 +8,27 @@ import {
 import errors from "../helpers/errors";
 import MealService from "../services/meal";
 
+const QUERIES = {
+    GET_BY_ID: (id: any) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
+    GET_DELETED_BY_ID: (id: any) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
+    NOT_DELETED: { isDeleted: false },
+    DELETED: { isDeleted: true },
+    POPULATE_ALL: {
+        path: "meals",
+        match: { isDeleted: false },
+        populate: {
+            path: "ingredients.food",
+            match: { isDeleted: false }
+        }
+    },
+    POPULATE_MEALS: {
+        path: "meals",
+        match: { isDeleted: false }
+    }
+}
+
 const exists = async (dailyPlanId: string | Schema.Types.ObjectId): Promise<boolean> => {
-    return DailyPlan.exists({ $and: [{ isDeleted: false }, { _id: dailyPlanId }] });
+    return DailyPlan.exists(QUERIES.GET_BY_ID(dailyPlanId));
 }
 
 const create = async (dailyPlanDTO: IDailyPlanCreateDTO): Promise<IDailyPlanModel> => {
@@ -24,6 +43,7 @@ const create = async (dailyPlanDTO: IDailyPlanCreateDTO): Promise<IDailyPlanMode
         const mealExists = await MealService.exists(dailyPlanIn.meals[i]);
         if (!mealExists) {
             invalidMeal = dailyPlanIn.meals[i];
+            break;
         }
     }
 
@@ -34,17 +54,19 @@ const create = async (dailyPlanDTO: IDailyPlanCreateDTO): Promise<IDailyPlanMode
 }
 
 const getAll = async (): Promise<IDailyPlanModel[]> => {
-    return DailyPlan.find({ isDeleted: false });
+    return DailyPlan.find(QUERIES.NOT_DELETED)
+        .populate(QUERIES.POPULATE_MEALS);
 }
 
 const getAllDeleted = async (): Promise<IDailyPlanModel[]> => {
-    return DailyPlan.find({ isDeleted: true });
+    return DailyPlan.find(QUERIES.DELETED);
 }
 
 const getById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
-        { $and: [{ isDeleted: false }, { _id: dailyPlanId }] }
-    )
+        QUERIES.GET_BY_ID(dailyPlanId)
+    ).populate(QUERIES.POPULATE_ALL);
+
     if (!dailyPlan)
         throw errors.DAILY_PLAN_NOT_FOUND();
     return dailyPlan;
@@ -52,7 +74,7 @@ const getById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
 
 const deleteById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
-        { $and: [{ isDeleted: false }, { _id: dailyPlanId }] }
+        QUERIES.GET_BY_ID(dailyPlanId)
     )
     if (!dailyPlan)
         throw errors.DAILY_PLAN_NOT_FOUND();
@@ -62,7 +84,7 @@ const deleteById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
 
 const restoreById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
-        { $and: [{ isDeleted: true }, { _id: dailyPlanId }] }
+        QUERIES.GET_DELETED_BY_ID(dailyPlanId)
     )
     if (!dailyPlan)
         throw errors.DAILY_PLAN_NOT_FOUND();
@@ -72,7 +94,7 @@ const restoreById = async (dailyPlanId: string): Promise<IDailyPlanModel> => {
 
 const addMeal = async (dailyPlanId: string, addMealDTO: IAddRemoveMealDTO): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
-        { $and: [{ isDeleted: false }, { _id: dailyPlanId }] }
+        QUERIES.GET_BY_ID(dailyPlanId)
     );
 
     if (!dailyPlan)
@@ -96,7 +118,7 @@ const addMeal = async (dailyPlanId: string, addMealDTO: IAddRemoveMealDTO): Prom
 
 const removeMeal = async (dailyPlanId: string, removeMealDTO: IAddRemoveMealDTO): Promise<IDailyPlanModel> => {
     const dailyPlan = await DailyPlan.findOne(
-        { $and: [{ isDeleted: false }, { _id: dailyPlanId }] }
+        QUERIES.GET_BY_ID(dailyPlanId)
     );
 
     if (!dailyPlan)
