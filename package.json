@@ -6,6 +6,7 @@
   "scripts": {
     "start": "nodemon --exec ts-node src/app.ts",
     "build": "tsc",
+    "clean": "tsc --build --clean",
     "test": "env NODE_ENV=test mocha 'src/test/**/*.ts' --recursive --exit"
   },
   "author": "",
