@@ -5,12 +5,20 @@
   "main": "src/app.js",
   "scripts": {
     "start": "nodemon --exec ts-node src/app.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "env NODE_ENV=test mocha 'src/test/**/*.ts' --recursive --exit"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/chai": "^4.2.9",
+    "@types/mocha": "^7.0.1",
+    "@types/supertest": "^2.0.8",
+    "chai": "^4.2.0",
+    "mocha": "^7.0.1",
+    "mockgoose": "^8.0.4",
     "nodemon": "^2.0.1",
+    "supertest": "^4.0.2",
     "ts-node": "^8.5.2",
     "typescript": "^3.7.2"
   },

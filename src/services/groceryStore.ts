@@ -25,8 +25,9 @@ const exists = async (groceryStoreId: string | Schema.Types.ObjectId): Promise<b
 
 const create = async (groceryStoreDTO: IGroceryStoreCreateDTO): Promise<IGroceryStoreModel> => {
     const groceryStoreIn: IGroceryStoreModel = {
-        ...groceryStoreDTO,
-        isDeleted: false
+        foods: [],
+        isDeleted: false,
+        ...groceryStoreDTO
     };
 
     let invalidFood = null;

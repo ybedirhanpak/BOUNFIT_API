@@ -27,15 +27,17 @@ const exists = async (mealId: string | Schema.Types.ObjectId): Promise<boolean> 
 
 const create = async (mealCreateDTO: IMealCreateDTO): Promise<IMealModel> => {
     const mealIn: IMealModel = {
-        ...mealCreateDTO,
-        isDeleted: false
+        ingredients: [],
+        isDeleted: false,
+        ...mealCreateDTO
     };
+
     //Check if there are any invalid foods.
     let invalidFood = null;
-    for (let i = 0; i < mealCreateDTO.ingredients.length; i++) {
-        const foodExists = await FoodService.exists(mealCreateDTO.ingredients[i].food);
+    for (let i = 0; i < mealIn.ingredients.length; i++) {
+        const foodExists = await FoodService.exists(mealIn.ingredients[i].food);
         if (!foodExists) {
-            invalidFood = mealCreateDTO.ingredients[i].food;
+            invalidFood = mealIn.ingredients[i].food;
             break;
         }
     }

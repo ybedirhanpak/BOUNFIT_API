@@ -13,11 +13,11 @@ interface IngredientUpdateDTO {
 }
 
 export interface IMealModel extends IBaseModel {
-    ingredients: [Ingredient]
+    ingredients: Ingredient[]
 }
 
 export interface IMealCreateDTO extends IBaseCreateDTO {
-    ingredients: [Ingredient]
+    ingredients?: Ingredient[]
 }
 
 export interface IAddIngredientDTO {

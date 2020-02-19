@@ -31,8 +31,10 @@ const exists = async (restaurantId: string | Schema.Types.ObjectId): Promise<boo
 
 const create = async (restaurantDTO: IRestaurantCreateDTO): Promise<IRestaurantModel> => {
     const restaurantIn: IRestaurantModel = {
-        ...restaurantDTO,
-        isDeleted: false
+        foods: [],
+        meals: [],
+        isDeleted: false,
+        ...restaurantDTO
     };
 
     let invalidFood = null;

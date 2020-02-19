@@ -33,8 +33,9 @@ const exists = async (dailyPlanId: string | Schema.Types.ObjectId): Promise<bool
 
 const create = async (dailyPlanDTO: IDailyPlanCreateDTO): Promise<IDailyPlanModel> => {
     const dailyPlanIn: IDailyPlanModel = {
-        ...dailyPlanDTO,
-        isDeleted: false
+        meals: [],
+        isDeleted: false,
+        ...dailyPlanDTO
     };
 
     //Check if there are any invalid meals.

@@ -32,8 +32,8 @@ const create = async (foodDTO: IFoodCreateDTO): Promise<IFoodModel> => {
     }
 
     const foodIn: IFoodModel = {
-        ...foodDTO,
-        isDeleted: false
+        isDeleted: false,
+        ...foodDTO
     };
     return new Food(foodIn).save();
 }
