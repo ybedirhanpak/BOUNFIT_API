@@ -4,7 +4,7 @@ import config from "../config";
 export const connectDatabase = () => {
     return new Promise((resolve, reject) => {
         mongoose.connect(
-            config.databaseURL,
+            config.databaseURL!,
             { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true }
         )
             .then(() => {

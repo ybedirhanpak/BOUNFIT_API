@@ -15,3 +15,6 @@ yarn.lock
 .vscode/
 
 **/*.js
+
+#Environment variables
+.env
