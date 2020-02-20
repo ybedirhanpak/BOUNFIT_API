@@ -1,14 +1,16 @@
+import { Schema } from "mongoose";
+
 export interface IBaseModel {
-    _id?:String;
-    name:String;
-    isDeleted:Boolean;
+    _id?: string | Schema.Types.ObjectId;
+    name: string;
+    isDeleted: boolean;
 }
 
 export interface IBaseCreateDTO {
-    name:String;
+    name: string;
 }
 
 export interface IBaseUpdateDTO {
-    name?:String;
-    isDeleted?:Boolean;
+    name?: string;
+    isDeleted?: boolean;
 }

@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/express-jwt": "0.0.42",
     "nodemon": "^2.0.1",
     "ts-node": "^8.5.2",
     "typescript": "^3.7.2"
@@ -20,6 +21,7 @@
     "@types/node": "^13.7.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-jwt": "^5.3.1",
     "mongoose": "^5.8.11",
     "reflect-metadata": "^0.1.13"
   }

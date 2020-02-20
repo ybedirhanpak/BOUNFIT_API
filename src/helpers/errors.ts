@@ -9,6 +9,7 @@ const Exception = (name: string, message: string, cause: any) => {
 export enum errorNames {
     INTERNAL_ERROR = "InternalError",
     VALIDATION_ERROR = "ValidationError",
+    JWT_SECRET_ERROR = "JwtSecretError",
     FOOD_NOT_FOUND = "FoodNotFound",
     FOOD_ALREADY_EXISTS = "FoodAlreadyExists",
     INVALID_FOOD = "InvalidFood",
@@ -18,7 +19,8 @@ export enum errorNames {
     INVALID_INGREDIENT = "InvalidIngredient",
     DAILY_PLAN_NOT_FOUND = "DailyPlanNotFound",
     RESTAURANT_NOT_FOUND = "RestaurantNotFound",
-    GROCERY_STORE_NOT_FOUND = "GroceryStoreNotFound"
+    GROCERY_STORE_NOT_FOUND = "GroceryStoreNotFound",
+    USER_NOT_FOUND = "UserNotFound"
 }
 
 export default {
@@ -26,7 +28,10 @@ export default {
         return Exception(errorNames.INTERNAL_ERROR, "Internal error occured while processing the request.", cause);
     },
     VALIDATION_ERROR: (cause?: any) => {
-        return Exception("ValidationError", "Validation error.", cause);
+        return Exception(errorNames.VALIDATION_ERROR, "Validation error.", cause);
+    },
+    JWT_SECRET_ERROR: (cause?: any) => {
+        return Exception(errorNames.JWT_SECRET_ERROR, "Jwt secret error.", cause);
     },
     FOOD_NOT_FOUND: (cause?: any) => {
         return Exception(errorNames.FOOD_NOT_FOUND, "Food with given id not found", cause);
@@ -57,5 +62,8 @@ export default {
     },
     GROCERY_STORE_NOT_FOUND: (cause?: any) => {
         return Exception(errorNames.GROCERY_STORE_NOT_FOUND, "Grocery store with given id not found", cause);
+    },
+    USER_NOT_FOUND: (cause?: any) => {
+        return Exception(errorNames.USER_NOT_FOUND, "User with given id not found", cause);
     },
 }

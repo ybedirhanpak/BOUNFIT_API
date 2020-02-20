@@ -1,9 +1,16 @@
 import mongoose, { Schema } from "mongoose";
 import { BaseModel, BaseOptions, Models } from "./base";
 import { IUserModel } from "../interfaces/user";
+import roles from "../helpers/roles";
 
 const UserSchema = new Schema({
     ...BaseModel,
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true
+    },
     passwordHash: {
         type: String,
         required: true
@@ -12,9 +19,9 @@ const UserSchema = new Schema({
         type: String,
         required: true
     },
-    email: {
+    role: {
         type: String,
-        required: true
+        default: roles.USER
     },
     foods: {
         type: [{

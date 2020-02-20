@@ -1,4 +1,4 @@
-import { IBaseModel } from './base';
+import { IBaseModel, IBaseCreateDTO } from './base';
 import { Schema } from 'mongoose';
 
 export interface IUserModel extends IBaseModel {
@@ -8,4 +8,12 @@ export interface IUserModel extends IBaseModel {
     foods: Schema.Types.ObjectId[];
     meals: Schema.Types.ObjectId[];
     dailyPlans: Schema.Types.ObjectId[];
+}
+
+export interface IUserCreateDTO extends IBaseCreateDTO {
+    email: string;
+    password: string;
+    foods?: [];
+    meals?: [];
+    dailyPlans?: [];
 }
