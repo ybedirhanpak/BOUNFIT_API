@@ -1,5 +1,5 @@
 import { Document, Model } from 'mongoose';
-import { IFoodModel} from '../../interfaces/food';
+import { IFoodModel } from '../../interfaces/food';
 
 declare global {
     namespace Models {

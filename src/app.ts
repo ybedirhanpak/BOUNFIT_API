@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import config from "./config";
 import express, { Request, Response, NextFunction } from "express";
-import { connectDatabase, closeDatabase } from "./database";
+import { connectDatabase } from "./database";
 import bodyParser from "body-parser";
 import routes from "./api";
 

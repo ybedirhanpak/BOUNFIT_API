@@ -1,6 +1,5 @@
 import UserService from "../services/user";
 import { Request, Response, NextFunction } from "express";
-import { IUserModel } from "../interfaces/user";
 import errors, { errorNames } from "../helpers/errors";
 
 interface RequestWithToken extends Request {
@@ -16,12 +15,11 @@ interface RequestWithToken extends Request {
 export default async (req: RequestWithToken, res: Response, next: NextFunction) => {
     try {
         const decodedUser = req.token.data;
-        const user = await UserService.getById(decodedUser._id);
+        const user = await UserService.getById(decodedUser._id); // This may throw USER_NOT_FOUND
         req.currentUser = user;
         return next();
     } catch (err) {
-        if (err.name === errorNames.USER_NOT_FOUND ||
-            err.name === errorNames.JWT_SECRET_ERROR) {
+        if (err.name === errorNames.USER_NOT_FOUND) {
             res.status(400).send(err);
         } else {
             res.status(500).send(errors.INTERNAL_ERROR(err));

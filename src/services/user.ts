@@ -5,12 +5,14 @@ import {
     IUserCreateDTO
 } from "../interfaces/user";
 import errors from "../helpers/errors";
+import argon2 from "argon2";
 
 const QUERIES = {
     GET_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
     GET_DELETED_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
     NOT_DELETED: { isDeleted: false },
-    DELETED: { isDeleted: true }
+    DELETED: { isDeleted: true },
+    GET_BY_EMAIL: (email: string) => ({ $and: [{ isDeleted: false }, { email: email }] }),
 }
 
 const exists = async (userId: string | Schema.Types.ObjectId): Promise<boolean> => {
