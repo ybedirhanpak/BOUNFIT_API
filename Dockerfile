@@ -16,5 +16,8 @@ RUN npm install --only=production
 # Copy local code to the container image.
 COPY . ./
 
+# Compile typescript to javascript
+RUN npm run build
+
 # Run the web service on container startup.
 CMD [ "npm", "start" ]
