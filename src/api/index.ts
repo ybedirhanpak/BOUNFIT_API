@@ -4,6 +4,8 @@ import meal from './routes/meal';
 import dailyPlan from './routes/dailyPlan';
 import groceryStore from './routes/groceryStore';
 import restaurant from './routes/restaurant';
+import school from './routes/school';
+
 
 export default () => {
     const app = Router();
@@ -13,6 +15,7 @@ export default () => {
     dailyPlan(app);
     groceryStore(app);
     restaurant(app);
+    school(app);
 
     return app;
 }

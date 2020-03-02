@@ -16,5 +16,8 @@ yarn.lock
 
 **/*.js
 
-#Environment variables
+# Environment variables
 .env
+
+# Mock data 
+src/mock/*.html
