@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import config from "../config";
 
 const connectMongoose = () => {
+    console.log("Connection URL:", config.databaseURL);
+
     mongoose.connect(
         config.databaseURL!,
         {
