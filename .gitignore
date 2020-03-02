@@ -21,3 +21,7 @@ yarn.lock
 
 # Mock data 
 src/mock/*.html
+
+# Docker compose
+*.yml
+
