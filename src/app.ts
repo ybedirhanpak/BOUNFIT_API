@@ -31,20 +31,10 @@ app.use(config.api.prefix, routes());
 
 const port = config.port;
 
-connectDatabase()
-    .then(() => {
-        app.listen(port, () => {
-            console.log(`################################################\n` +
-                `     🛡️  Server listening on port: ${config.port} 🛡️\n` +
-                `################################################\n`
-            );
-        });
-    })
-    .catch(() => {
-        console.log(`################################################\n` +
-            `     ❌  Server cannot run, no database connection ❌\n` +
-            `################################################\n`
-        );
-    })
+connectDatabase();
+
+app.listen(port, () => {
+    console.log(`🛡️  Server listening on port: ${config.port} 🛡️`);
+});
 
 export default app;
