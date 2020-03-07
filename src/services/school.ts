@@ -1,6 +1,6 @@
 import { parse } from 'node-html-parser';
 import fetch from 'isomorphic-unfetch';
-import { ISchoolFood, ISchoolMeal } from "../interfaces/school";
+import { ISchoolFood, ISchoolMeal, ISchoolCourse } from "../interfaces/school";
 
 const getCurrentHTML = async () => {
     const response = await fetch("https://yemekhane.boun.edu.tr/");
@@ -9,39 +9,67 @@ const getCurrentHTML = async () => {
 
 const parseMeal = async (mealHTML: HTMLElement): Promise<ISchoolMeal> => {
     let meal = {};
-    const foods = ["soup", "maincourse", "vegetarien", "complementary"];
-    for (let food of foods) {
-        //Parse food other than selectives
-        const foodHTML = mealHTML.querySelector(`.food-container.${food} .field-content a`);
-        if (foodHTML) {
-            const schoolFood: ISchoolFood = {
-                name: foodHTML.innerHTML,
-                slug: foodHTML.getAttribute("href") ?? ""
-            }
-            //Add food to meal
-            meal = {
-                ...meal,
-                [food]: schoolFood
-            }
+    // These will provide a single course. They include calories
+    const courses = ["soup", "maincourse", "vegetarien"];
+    // These will provide a list of foods don't include calories. 
+    const foods = ["complementary", "selective"];
+
+    for (let course of courses) {
+        const schoolCourse = await parseCourse(mealHTML, course);
+        meal = {
+            ...meal,
+            [course]: schoolCourse
         }
     }
-    //Parse selectives
-    const selectiveHTML = mealHTML.querySelectorAll(`.food-container.selective .field-content .item-list ul li a`);
-    let selective: ISchoolFood[] = [];
-    selectiveHTML.forEach((element) => {
-        selective.push({
+
+    for (let food of foods) {
+        const foodList = await parseFoodList(mealHTML, food);
+        meal = {
+            ...meal,
+            [food]: foodList
+        }
+    }
+
+    return (meal as ISchoolMeal);
+}
+
+const parseCourse = async (mealHTML: HTMLElement, course: string) => {
+    let schoolCourse: ISchoolCourse = {
+        name: "",
+        slug: "",
+        calories: ""
+    }
+
+    const courseHTML = mealHTML.querySelector(`.food-container.${course} .field-content a`);
+    if (courseHTML) {
+        schoolCourse = {
+            ...schoolCourse,
+            name: courseHTML.innerHTML,
+            slug: courseHTML.getAttribute("href") ?? "",
+        }
+    }
+
+    const caloriesHTML = mealHTML.querySelector(`.food-container.${course} .calories .field-content`)
+    if (caloriesHTML) {
+        schoolCourse = {
+            ...schoolCourse,
+            calories: caloriesHTML.innerHTML
+        }
+    }
+
+    return schoolCourse;
+}
+
+const parseFoodList = async (mealHTML: HTMLElement, food: string) => {
+    const foodHTML = mealHTML.querySelectorAll(`.food-container.${food} .field-content .item-list ul li a`);
+    let foodList: ISchoolFood[] = [];
+    foodHTML.forEach((element) => {
+        foodList.push({
             name: element.innerHTML,
             slug: element.getAttribute("href") ?? ""
         })
     });
-
-    //Add selectives to meal
-    meal = {
-        ...meal,
-        selectives: selective
-    }
-
-    return (meal as ISchoolMeal);
+    return foodList;
 }
 
 const getCurrentSchoolMeals = async () => {

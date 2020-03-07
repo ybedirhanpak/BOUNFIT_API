@@ -18,10 +18,10 @@
     "@types/mongoose": "^5.7.1",
     "@types/node": "^13.7.1",
     "@types/node-fetch": "^2.5.5",
-    "nodemon": "^2.0.1",
-    "typescript": "^3.7.2"
+    "nodemon": "^2.0.1"
   },
   "dependencies": {
+    "typescript": "^3.7.2",
     "ts-node": "^8.5.2",
     "argon2": "^0.26.0",
     "dotenv": "^8.2.0",

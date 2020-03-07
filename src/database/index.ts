@@ -9,14 +9,11 @@ const connectMongoose = () => {
         {
             useNewUrlParser: true,
             useFindAndModify: false,
-            useUnifiedTopology: true,
-            server: {
-                auto_reconnect: true
-            }
+            useUnifiedTopology: true
         }
     )
         .then(() => {
-            console.log(`🐍  Database connection established. 🐍`);
+            console.log(`👌  Database connection completed. 👌`);
         })
         .catch((error) => {
             console.log(`❌  Database connection error ${error} ❌`);
@@ -27,24 +24,27 @@ export const connectDatabase = () => {
     let db = mongoose.connection;
 
     db.on('connecting', () => {
-        console.log('Connecting to MongoDB...');
+        console.log(`⏳  Connecting to Database... ⏳`);
     });
 
     db.on('error', (error) => {
-        console.error('Error in MongoDb connection: ' + error);
+        console.log(`❌  Database connection error ${error} ❌`);
         mongoose.disconnect();
     });
     db.on('connected', () => {
-        console.log('MongoDB connected!');
+        console.log(`🆗  Database connected. 🆗`);
+
     });
     db.once('open', () => {
-        console.log('MongoDB connection opened!');
+        console.log(`👍  Database connection opened!. 👍`);
+
     });
     db.on('reconnected', () => {
-        console.log('MongoDB reconnected!');
+        console.log(`🤘  Database reconnected! 🤘`);
+
     });
     db.on('disconnected', () => {
-        console.log('MongoDB disconnected!');
+        console.log(`🛑  Database disconnected. Trying to reconnect... 🛑`);
         connectMongoose();
     });
 
