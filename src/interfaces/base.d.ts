@@ -1,16 +1,16 @@
-import { Schema } from "mongoose";
+import { Schema } from 'mongoose';
 
-export interface IBaseModel {
+export interface BaseModel {
     _id?: string | Schema.Types.ObjectId;
     name: string;
     isDeleted: boolean;
 }
 
-export interface IBaseCreateDTO {
+export interface BaseCreateDTO {
     name: string;
 }
 
-export interface IBaseUpdateDTO {
+export interface BaseUpdateDTO {
     name?: string;
     isDeleted?: boolean;
 }

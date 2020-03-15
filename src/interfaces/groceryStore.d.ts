@@ -1,14 +1,14 @@
-import { IBaseModel, IBaseCreateDTO } from './base';
 import { Schema } from 'mongoose';
+import { BaseModel, BaseCreateDTO } from './base';
 
-export interface IGroceryStoreModel extends IBaseModel {
-    foods: Schema.Types.ObjectId[]
+export interface GroceryStoreModel extends BaseModel {
+    rawFoods: Schema.Types.ObjectId[]
 }
 
-export interface IGroceryStoreCreateDTO extends IBaseCreateDTO {
-    foods?: Schema.Types.ObjectId[]
+export interface GroceryStoreCreateDTO extends BaseCreateDTO {
+    rawFoods?: Schema.Types.ObjectId[]
 }
 
-export interface IAddRemoveFoodDTO {
-    food: Schema.Types.ObjectId
+export interface AddRemoveRawFoodDTO {
+    rawFood: Schema.Types.ObjectId
 }

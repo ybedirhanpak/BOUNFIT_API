@@ -1,22 +1,26 @@
-import { IBaseModel, IBaseCreateDTO, IBaseUpdateDTO } from './base'; 
+import { Schema } from 'mongoose';
+import { BaseModel, BaseCreateDTO } from './base';
+import { Values } from './values';
+import { Ingredient } from './ingredient';
 
-export interface IFoodModel extends IBaseModel {
-    protein:Number;
-    carb:Number;
-    fat:Number;
-    calories:Number;
+export interface FoodModel extends BaseModel {
+    ingredients: Ingredient[];
+    total: { values: Values, quantity: Number }
 }
 
-export interface IFoodCreateDTO extends IBaseCreateDTO{
-    protein:Number;
-    carb:Number;
-    fat:Number;
-    calories:Number;
+export interface FoodCreateDTO extends BaseCreateDTO {
+    ingredients?: Ingredient[];
 }
 
-export interface IFoodUpdateDTO extends IBaseUpdateDTO{
-    protein?:Number;
-    carb?:Number;
-    fat?:Number;
-    calories?:Number;
+export interface AddIngredientDTO {
+    ingredient: Ingredient;
+}
+
+export interface RemoveIngredientDTO {
+    ingredientId: Schema.Types.ObjectId;
+}
+
+export interface UpdateIngredientDTO {
+    ingredientId: Schema.Types.ObjectId;
+    quantity: Number;
 }
