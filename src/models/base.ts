@@ -1,25 +1,27 @@
-import { SchemaDefinition, SchemaOptions } from "mongoose";
+import { SchemaDefinition, SchemaOptions } from 'mongoose';
+
 export const BaseModel: SchemaDefinition = {
-    name: {
-        type: String,
-        required: true
-    },
-    isDeleted: {
-        type: Boolean,
-        required: true,
-        default: false
-    }
+  name: {
+    type: String,
+    required: true,
+  },
+  isDeleted: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
 };
 
 export const BaseOptions: SchemaOptions = {
-    timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" }
-}
+  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
+};
 
 export enum Models {
-    food = "Food",
-    meal = "Meal",
-    dailyPlan = "DailyPlan",
-    user = "User",
-    restaurant = "Restaurant",
-    groceryStore = "GroceryStore"
+    RAW_FOOD = 'RawFood',
+    FOOD = 'Food',
+    MEAL = 'Meal',
+    DAILY_PLAN = 'DailyPlan',
+    USER = 'User',
+    RESTAURANT = 'Restaurant',
+    GROCERY_STORE = 'GroceryStore'
 }

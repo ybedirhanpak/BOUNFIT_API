@@ -1,24 +1,24 @@
-import mongoose, { Schema } from "mongoose";
-import { BaseModel, BaseOptions, Models } from "./base";
-import { IGroceryStoreModel } from "../interfaces/groceryStore";
+import mongoose, { Schema } from 'mongoose';
+import { BaseModel, BaseOptions, Models } from './base';
+import { GroceryStoreModel } from '../interfaces/groceryStore';
 
 const GroceryStoreSchema = new Schema({
-    ...BaseModel,
-    foods: {
-        type: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: Models.food
-            }
-        ],
-        required: true,
-        default: []
-    }
+  ...BaseModel,
+  foods: {
+    type: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: Models.FOOD,
+      },
+    ],
+    required: true,
+    default: [],
+  },
 }, {
-    ...BaseOptions
+  ...BaseOptions,
 });
 
-export default mongoose.model<IGroceryStoreModel & mongoose.Document>(
-    Models.groceryStore,
-    GroceryStoreSchema
+export default mongoose.model<GroceryStoreModel & mongoose.Document>(
+  Models.GROCERY_STORE,
+  GroceryStoreSchema,
 );

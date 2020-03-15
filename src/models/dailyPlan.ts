@@ -1,24 +1,24 @@
-import mongoose, { Schema } from "mongoose";
-import { BaseModel, BaseOptions, Models } from "./base";
-import { IDailyPlanModel } from "../interfaces/dailyPlan";
+import mongoose, { Schema } from 'mongoose';
+import { BaseModel, BaseOptions, Models } from './base';
+import { DailyPlanModel } from '../interfaces/dailyPlan';
 
 const DailyPlanSchema = new Schema({
-    ...BaseModel,
-    meals: {
-        type: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: Models.meal
-            }
-        ],
-        required: true,
-        default: []
-    }
+  ...BaseModel,
+  meals: {
+    type: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: Models.MEAL,
+      },
+    ],
+    required: true,
+    default: [],
+  },
 }, {
-    ...BaseOptions
+  ...BaseOptions,
 });
 
-export default mongoose.model<IDailyPlanModel & mongoose.Document>(
-    Models.dailyPlan,
-    DailyPlanSchema
+export default mongoose.model<DailyPlanModel & mongoose.Document>(
+  Models.DAILY_PLAN,
+  DailyPlanSchema,
 );

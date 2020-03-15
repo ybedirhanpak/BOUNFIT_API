@@ -1,30 +1,28 @@
-import mongoose, { Schema } from "mongoose";
-import { BaseModel, BaseOptions, Models } from "./base";
-import { IFoodModel } from "../interfaces/food";
+import mongoose, { Schema } from 'mongoose';
+import { BaseModel, BaseOptions, Models } from './base';
+import { FoodModel } from '../interfaces/food';
 
 const FoodSchema = new Schema({
-    ...BaseModel,
-    protein: {
-        type: Number,
-        required: true
-    },
-    carb: {
-        type: Number,
-        required: true
-    },
-    fat: {
-        type: Number,
-        required: true
-    },
-    calories: {
-        type: Number,
-        required: true
-    }
+  ...BaseModel,
+  ingredients: {
+    type: [
+      {
+        _id: Schema.Types.ObjectId,
+        rawFood: {
+          type: Schema.Types.ObjectId,
+          ref: Models.RAW_FOOD,
+        },
+        quantity: Number,
+      },
+    ],
+    required: true,
+    default: [],
+  },
 }, {
-    ...BaseOptions
+  ...BaseOptions,
 });
 
-export default mongoose.model<IFoodModel & mongoose.Document>(
-    Models.food,
-    FoodSchema
+export default mongoose.model<FoodModel & mongoose.Document>(
+  Models.FOOD,
+  FoodSchema,
 );

@@ -1,34 +1,34 @@
-import mongoose, { Schema } from "mongoose";
-import { BaseModel, BaseOptions, Models } from "./base";
-import { IRestaurantModel } from "../interfaces/restaurant";
+import mongoose, { Schema } from 'mongoose';
+import { BaseModel, BaseOptions, Models } from './base';
+import { RestaurantModel } from '../interfaces/restaurant';
 
 const RestaurantSchema = new Schema({
-    ...BaseModel,
-    foods: {
-        type: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: Models.food
-            }
-        ],
-        required: true,
-        default: []
-    },
-    meals: {
-        type: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: Models.meal
-            }
-        ],
-        required: true,
-        default: []
-    }
+  ...BaseModel,
+  foods: {
+    type: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: Models.FOOD,
+      },
+    ],
+    required: true,
+    default: [],
+  },
+  meals: {
+    type: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: Models.MEAL,
+      },
+    ],
+    required: true,
+    default: [],
+  },
 }, {
-    ...BaseOptions
+  ...BaseOptions,
 });
 
-export default mongoose.model<IRestaurantModel & mongoose.Document>(
-    Models.restaurant,
-    RestaurantSchema
+export default mongoose.model<RestaurantModel & mongoose.Document>(
+  Models.RESTAURANT,
+  RestaurantSchema,
 );

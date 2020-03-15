@@ -1,8 +1,8 @@
 import { Schema } from 'mongoose';
-import { RawFood } from './rawFood';
+import { RawFoodModel } from './rawFood';
 
 export interface Ingredient {
     _id?: Schema.Types.ObjectId,
-    rawFood: RawFood;
+    rawFood: RawFoodModel;
     quantity: Number;
 }
