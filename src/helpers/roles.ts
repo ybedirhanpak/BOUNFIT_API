@@ -1,6 +1,6 @@
 const enum Roles {
-    USER = "user",
-    ADMIN = "admin"
+    USER = 'user',
+    ADMIN = 'admin'
 }
 
 export default Roles;
