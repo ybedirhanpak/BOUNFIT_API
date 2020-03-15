@@ -1,8 +1,12 @@
-import { Schema } from 'mongoose';
-import { RawFoodModel } from './rawFood';
+import mongoose from 'mongoose';
 
 export interface Ingredient {
-    _id?: Schema.Types.ObjectId,
-    rawFood: RawFoodModel;
-    quantity: Number;
+    _id?: mongoose.Types.ObjectId,
+    rawFood: mongoose.Types.ObjectId;
+    quantity: number;
+}
+
+export interface IngredientCreateDTO {
+    rawFood: string;
+    quantity: number;
 }

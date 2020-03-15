@@ -1,111 +1,194 @@
-import { Schema } from "mongoose";
-import Food from "../models/food";
+import mongoose, { Schema } from 'mongoose';
+import Food from '../models/food';
 import {
-    IFoodModel,
-    IFoodCreateDTO,
-    IFoodUpdateDTO
-} from "../interfaces/food";
-import errors from "../helpers/errors";
+  FoodModel,
+  FoodCreateDTO,
+  AddIngredientDTO,
+  RemoveIngredientDTO,
+  UpdateIngredientDTO,
+} from '../interfaces/food';
+import errors from '../helpers/errors';
+import BaseService, { QUERIES as BASE_QUERIES } from './base';
+import RawFoodService from './rawFood';
+import { Ingredient } from '../interfaces/ingredient';
+import { RawFoodModel } from '../interfaces/rawFood';
 
 const QUERIES = {
-    GET_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
-    GET_DELETED_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
-    NOT_DELETED: { isDeleted: false },
-    DELETED: { isDeleted: true }
-}
+  ...BASE_QUERIES,
+};
 
-const exists = async (foodId: string | Schema.Types.ObjectId): Promise<boolean> => {
-    return Food.exists(QUERIES.GET_BY_ID(foodId));
-}
+const UpdateFoodTotalValues = (
+  food: FoodModel,
+  rawFood: RawFoodModel,
+  quantity: number,
+  type: 'add' | 'remove',
+) => {
+  const c = type === 'add' ? 1 : -1;
+  food.total.values.protein += c * rawFood.protein * (quantity / 100);
+  food.total.values.carb += c * rawFood.carb * (quantity / 100);
+  food.total.values.fat += c * rawFood.fat * (quantity / 100);
+  food.total.values.calories += c * rawFood.calories * (quantity / 100);
+};
 
-const create = async (foodDTO: IFoodCreateDTO): Promise<IFoodModel> => {
-    if (foodDTO.protein < 0)
-        throw errors.INVALID_FOOD("Protein cannot be less than zero.");
-    if (foodDTO.carb < 0)
-        throw errors.INVALID_FOOD("Carb cannot be less than zero.");
-    if (foodDTO.fat < 0)
-        throw errors.INVALID_FOOD("Fat cannot be less than zero.");
-    if (foodDTO.calories < 0)
-        throw errors.INVALID_FOOD("Calories cannot be less than zero.");
-    if (foodDTO.name.length > 100) {
-        throw errors.INVALID_FOOD("Name cannot exceed 100 characters.");
-    }
+const Create = async (foodDTO: FoodCreateDTO): Promise<FoodModel> => {
+  const foodIn: FoodModel = {
+    isDeleted: false,
+    total: {
+      values: {
+        protein: 0,
+        carb: 0,
+        fat: 0,
+        calories: 0,
+      },
+      quantity: 0,
+    },
+    ingredients: [],
+    ...foodDTO,
+  };
 
-    const foodIn: IFoodModel = {
-        isDeleted: false,
-        ...foodDTO
+  if (foodDTO.ingredients) {
+    const quantityList: number[] = [];
+    const promises = foodDTO.ingredients.map((ingredient) => {
+      quantityList.push(ingredient.quantity);
+      return RawFoodService.GetById(ingredient.rawFood);
+    });
+
+    const rawFoods = await Promise.all(promises);
+
+    rawFoods.forEach((rawFood, index) => {
+      UpdateFoodTotalValues(foodIn, rawFood, quantityList[index], 'add');
+    });
+  }
+
+  return new Food(foodIn).save();
+};
+
+const AddIngredient = async (foodId: string | mongoose.Types.ObjectId,
+  addIngredientDTO: AddIngredientDTO): Promise<FoodModel> => {
+  const food = await Food.findOne(
+    QUERIES.GET_BY_ID(foodId),
+  );
+
+  if (!food) throw errors.FOOD_NOT_FOUND(`Food with id: ${foodId} doesn't exist.`);
+
+  const { ingredient } = addIngredientDTO;
+  if (!ingredient) throw errors.INVALID_INGREDIENT('Ingredient object is missing in request.');
+
+  if (!ingredient.rawFood) throw errors.INVALID_INGREDIENT('RawFood in ingredient object is missing.');
+
+  if (!ingredient.quantity) {
+    throw errors.INVALID_INGREDIENT('Quantity in ingredient object is missing.');
+  }
+
+  if (ingredient.quantity <= 0) {
+    throw errors.INVALID_INGREDIENT('Quantity cannot be less than zero.');
+  }
+
+  const rawFoodExists = await RawFoodService.Exists(ingredient.rawFood);
+  if (!rawFoodExists) throw errors.RAW_FOOD_NOT_FOUND(`Raw food with id: ${ingredient.rawFood} doesn't exist.`);
+
+  const oldIndex = food.ingredients.findIndex(
+    (i) => mongoose.Types.ObjectId(ingredient.rawFood).equals(i.rawFood),
+  );
+
+  if (oldIndex === -1) {
+    const ingredientUpdate: Ingredient = {
+      quantity: ingredient.quantity,
+      rawFood: mongoose.Types.ObjectId(ingredient.rawFood),
     };
-    return new Food(foodIn).save();
-}
+    food.ingredients.push(ingredientUpdate);
+  } else {
+    // If ingredient already exists, increase its quantity
+    const ingredientOld = food.ingredients[oldIndex];
+    ingredientOld.quantity += ingredient.quantity;
+  }
 
-const getAll = async (): Promise<IFoodModel[]> => {
-    return Food.find(QUERIES.NOT_DELETED);
-}
+  food.total.quantity += ingredient.quantity;
+  const rawFood = await RawFoodService.GetById(ingredient.rawFood);
+  UpdateFoodTotalValues(food, rawFood, ingredient.quantity, 'add');
 
-const getAllDeleted = async (): Promise<IFoodModel[]> => {
-    return Food.find(QUERIES.DELETED);
-}
+  return food.save();
+};
 
-const getById = async (foodId: string | Schema.Types.ObjectId): Promise<IFoodModel> => {
-    const food = await Food.findOne(
-        QUERIES.GET_BY_ID(foodId)
-    )
-    if (!food)
-        throw errors.FOOD_NOT_FOUND();
-    return food;
-}
+const UpdateIngredient = async (foodId: string | mongoose.Types.ObjectId,
+  updateIngredientDTO: UpdateIngredientDTO): Promise<FoodModel> => {
+  const food = await Food.findOne(
+    QUERIES.GET_BY_ID(foodId),
+  );
 
-const updateById = async (foodId: string | Schema.Types.ObjectId,
-    foodUpdateDTO: IFoodUpdateDTO): Promise<IFoodModel> => {
-    const food = await Food.findOne(
-        QUERIES.GET_BY_ID(foodId)
-    )
-    if (!food)
-        throw errors.FOOD_NOT_FOUND();
+  if (!food) throw errors.FOOD_NOT_FOUND(`Food with id: ${foodId} doesn't exist.`);
 
-    if (foodUpdateDTO.protein && foodUpdateDTO.protein < 0)
-        throw errors.INVALID_FOOD("Protein cannot be less than zero.");
-    if (foodUpdateDTO.carb && foodUpdateDTO.carb < 0)
-        throw errors.INVALID_FOOD("Carb cannot be less than zero.");
-    if (foodUpdateDTO.fat && foodUpdateDTO.fat < 0)
-        throw errors.INVALID_FOOD("Fat cannot be less than zero.");
-    if (foodUpdateDTO.calories && foodUpdateDTO.calories < 0)
-        throw errors.INVALID_FOOD("Calories cannot be less than zero.");
-    if (foodUpdateDTO.name && foodUpdateDTO.name.length > 100) {
-        throw errors.INVALID_FOOD("Name cannot exceed 100 characters.");
-    }
+  const { ingredientId, quantity } = updateIngredientDTO;
 
-    food.set(foodUpdateDTO);
-    return food.save();
-}
+  const oldIndex = food.ingredients.findIndex(
+    (i) => mongoose.Types.ObjectId(ingredientId).equals(i.rawFood),
+  );
 
-const deleteById = async (foodId: string | Schema.Types.ObjectId): Promise<IFoodModel> => {
-    const food = await Food.findOne(
-        QUERIES.GET_BY_ID(foodId)
-    )
-    if (!food)
-        throw errors.FOOD_NOT_FOUND();
-    food.isDeleted = true;
-    return food.save();
-}
+  // If ingredient doesn't exists in the list, throw error
+  if (oldIndex === -1) {
+    throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredientId} `
+            + `doesn't exist in ingredients list of food: ${food.name}.`);
+  }
 
-const restoreById = async (foodId: string | Schema.Types.ObjectId): Promise<IFoodModel> => {
-    const food = await Food.findOne(
-        QUERIES.GET_DELETED_BY_ID(foodId)
-    )
-    if (!food)
-        throw errors.FOOD_NOT_FOUND();
-    food.isDeleted = false;
-    return food.save();
-}
+  const ingredient = food.ingredients[oldIndex];
+
+  if (quantity) {
+    if (quantity < 0) throw errors.INVALID_INGREDIENT('Quantity cannot be less than zero.');
+
+    const rawFood = await RawFoodService.GetById(ingredient.rawFood);
+    UpdateFoodTotalValues(food, rawFood, quantity - ingredient.quantity, 'add');
+    food.total.quantity += quantity - ingredient.quantity;
+    ingredient.quantity = quantity;
+  }
+
+  return food.save();
+};
+
+const RemoveIngredient = async (foodId: string | mongoose.Types.ObjectId,
+  removeIngredientDTO: RemoveIngredientDTO): Promise<FoodModel> => {
+  const food = await Food.findOne(
+    QUERIES.GET_BY_ID(foodId),
+  );
+
+  if (!food) throw errors.FOOD_NOT_FOUND(`Food with id: ${foodId} doesn't exist.`);
+
+  const { ingredientId } = removeIngredientDTO;
+
+  if (!ingredientId) throw errors.INVALID_INGREDIENT('Ingredient id is missing in request.');
+
+  const oldIndex = food.ingredients.findIndex(
+    (i) => mongoose.Types.ObjectId(ingredientId).equals(i.rawFood),
+  );
+
+  // If ingredient doesn't exists in the list, throw error
+  if (oldIndex === -1) {
+    throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredientId} `
+            + `doesn't exist in ingredients list of food: ${food.name}.`);
+  }
+
+  const ingredient = food.ingredients[oldIndex];
+
+  const rawFood = await RawFoodService.GetById(ingredient.rawFood);
+  UpdateFoodTotalValues(food, rawFood, ingredient.quantity, 'remove');
+  food.total.quantity -= ingredient.quantity;
+
+  // Remove ingredient from list
+  food.ingredients.splice(oldIndex, 1);
+
+  return food.save();
+};
 
 export default {
-    exists,
-    create,
-    getAll,
-    getAllDeleted,
-    getById,
-    updateById,
-    deleteById,
-    restoreById
-}
+  Exists: (id: string | mongoose.Types.ObjectId) => BaseService.Exists<FoodModel>(id, Food),
+  GetAll: () => BaseService.GetAll<FoodModel>(Food),
+  GetAllDeleted: () => BaseService.GetAllDeleted<FoodModel>(Food),
+  GetById: (id: string | mongoose.Types.ObjectId) => BaseService.GetById<FoodModel>(id, Food),
+  DeleteById:
+      (id: string | mongoose.Types.ObjectId) => BaseService.DeleteById<FoodModel>(id, Food),
+  RestoreById:
+      (id: string | mongoose.Types.ObjectId) => BaseService.RestoreById<FoodModel>(id, Food),
+  Create,
+  AddIngredient,
+  UpdateIngredient,
+  RemoveIngredient,
+};

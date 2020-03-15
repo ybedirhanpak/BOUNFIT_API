@@ -1,13 +1,13 @@
 export interface Values {
-    protein: Number;
-    carb: Number;
-    fat: Number;
-    calories: Number;
+    protein: number;
+    carb: number;
+    fat: number;
+    calories: number;
 }
 
 export interface ValuesUpdateDTO {
-    protein?: Number;
-    carb?: Number;
-    fat?: Number;
-    calories?: Number;
+    protein?: number;
+    carb?: number;
+    fat?: number;
+    calories?: number;
 }

@@ -1,11 +1,10 @@
-import { Schema } from 'mongoose';
 import { BaseModel, BaseCreateDTO } from './base';
 import { Values } from './values';
-import { Ingredient } from './ingredient';
+import { Ingredient, IngredientCreateDTO } from './ingredient';
 
 export interface FoodModel extends BaseModel {
     ingredients: Ingredient[];
-    total: { values: Values, quantity: Number }
+    total: { values: Values, quantity: number }
 }
 
 export interface FoodCreateDTO extends BaseCreateDTO {
@@ -13,14 +12,14 @@ export interface FoodCreateDTO extends BaseCreateDTO {
 }
 
 export interface AddIngredientDTO {
-    ingredient: Ingredient;
+    ingredient: IngredientCreateDTO;
 }
 
 export interface RemoveIngredientDTO {
-    ingredientId: Schema.Types.ObjectId;
+    ingredientId: string;
 }
 
 export interface UpdateIngredientDTO {
-    ingredientId: Schema.Types.ObjectId;
-    quantity: Number;
+    ingredientId: string;
+    quantity: number;
 }

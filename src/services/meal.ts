@@ -1,216 +1,117 @@
-import { Schema } from "mongoose";
-import Meal from "../models/meal";
+import mongoose, { Schema } from 'mongoose';
+import Meal from '../models/meal';
 import {
-    IMealModel,
-    IMealCreateDTO,
-    IAddIngredientDTO,
-    IUpdateIngredientDTO,
-    IRemoveIngredientDTO
-} from "../interfaces/meal";
-import errors from "../helpers/errors";
-import FoodService from "../services/food";
+  MealModel,
+  MealCreateDTO,
+  AddRemoveFoodDTO,
+} from '../interfaces/meal';
+import errors from '../helpers/errors';
+import FoodService from '../services/food';
+import BaseService, { QUERIES as BASE_QUERIES } from './base';
+import { FoodModel } from '../interfaces/food';
 
 const QUERIES = {
-    GET_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
-    GET_DELETED_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
-    NOT_DELETED: { isDeleted: false },
-    DELETED: { isDeleted: true },
-    POPULATE_FOODS: {
-        path: "foods",
-        match: { isDeleted: false },
-    }
-}
+  ...BASE_QUERIES,
+  POPULATE_FOODS: {
+    path: 'foods',
+    match: { isDeleted: false },
+  },
+};
 
-const exists = async (mealId: string | Schema.Types.ObjectId): Promise<boolean> => {
-    return await Meal.exists(QUERIES.GET_BY_ID(mealId));
-}
+const UpdateMealTotalValues = (meal: MealModel, food: FoodModel, type: 'add' | 'remove') => {
+  const c = type === 'add' ? 1 : -1;
+  meal.totalValues.protein += c * food.total.values.protein;
+  meal.totalValues.carb += c * food.total.values.carb;
+  meal.totalValues.fat += c * food.total.values.fat;
+  meal.totalValues.calories += c * food.total.values.calories;
+};
 
-const create = async (mealCreateDTO: IMealCreateDTO): Promise<IMealModel> => {
-    const mealIn: IMealModel = {
-        ingredients: [],
-        isDeleted: false,
-        ...mealCreateDTO
-    };
+const Create = async (mealCreateDTO: MealCreateDTO): Promise<MealModel> => {
+  const mealIn: MealModel = {
+    isDeleted: false,
+    foods: [],
+    totalValues: {
+      protein: 0,
+      carb: 0,
+      fat: 0,
+      calories: 0,
+    },
+    ...mealCreateDTO,
+  };
 
-    //Check if there are any invalid foods.
-    let invalidFood = null;
-    for (let i = 0; i < mealIn.ingredients.length; i++) {
-        const foodExists = await FoodService.exists(mealIn.ingredients[i].food);
-        if (!foodExists) {
-            invalidFood = mealIn.ingredients[i].food;
-            break;
-        }
-    }
+  if (mealCreateDTO.foods) {
+    const promises = mealCreateDTO.foods.map((food) => FoodService.GetById(food));
+    const foodList = await Promise.all(promises);
+    foodList.forEach((food) => {
+      UpdateMealTotalValues(mealIn, food, 'add');
+    });
+  }
 
-    if (invalidFood)
-        throw errors.FOOD_NOT_FOUND(`Food with id: ${invalidFood} doesn't exist.`);
+  return new Meal(mealIn).save();
+};
 
-    return new Meal(mealIn).save();
-}
+const GetWithFoods = async (mealId: string | mongoose.Types.ObjectId): Promise<MealModel> => {
+  const meal = await Meal.findOne(
+    QUERIES.GET_BY_ID(mealId),
+  ).populate(QUERIES.POPULATE_FOODS);
 
-const getAll = async (): Promise<IMealModel[]> => {
-    return Meal.find(QUERIES.NOT_DELETED)
-        .populate(QUERIES.POPULATE_FOODS);
-}
+  if (!meal) throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
 
-const getAllDeleted = async (): Promise<IMealModel[]> => {
-    return Meal.find({ isDeleted: true });
-}
+  return meal;
+};
 
-const getById = async (mealId: string | Schema.Types.ObjectId): Promise<IMealModel> => {
-    const meal = await Meal.findOne(
-        QUERIES.GET_BY_ID(mealId)
-    ).populate(QUERIES.POPULATE_FOODS);
+const AddFood = async (
+  mealId: string | mongoose.Types.ObjectId,
+  addFoodDTO: AddRemoveFoodDTO,
+): Promise<MealModel> => {
+  const meal = await Meal.findOne(
+    QUERIES.GET_BY_ID(mealId),
+  );
 
-    if (!meal)
-        throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
+  if (!meal) throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
 
-    return meal;
-}
+  const { foodId } = addFoodDTO;
 
-const deleteById = async (mealId: string | Schema.Types.ObjectId): Promise<IMealModel> => {
-    const meal = await Meal.findOne(
-        QUERIES.GET_BY_ID(mealId)
-    )
-    if (!meal)
-        throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
+  const food = await FoodService.GetById(foodId);
+  UpdateMealTotalValues(meal, food, 'add');
 
-    meal.isDeleted = true;
-    return meal.save();
-}
+  meal.foods.push(mongoose.Types.ObjectId(foodId));
 
-const restoreById = async (mealId: string | Schema.Types.ObjectId): Promise<IMealModel> => {
-    const meal = await Meal.findOne(
-        QUERIES.GET_DELETED_BY_ID(mealId)
-    )
-    if (!meal)
-        throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
+  return meal.save();
+};
 
-    meal.isDeleted = false;
-    return meal.save();
-}
+const RemoveFood = async (
+  mealId: string | mongoose.Types.ObjectId,
+  removeFoodDTO: AddRemoveFoodDTO,
+): Promise<MealModel> => {
+  const meal = await Meal.findOne(
+    QUERIES.GET_BY_ID(mealId),
+  );
 
-const addIngredient = async (mealId: string | Schema.Types.ObjectId,
-    addIngredientDTO: IAddIngredientDTO): Promise<IMealModel> => {
-    const meal = await Meal.findOne(
-        QUERIES.GET_BY_ID(mealId)
-    );
-    if (!meal)
-        throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
+  if (!meal) throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
 
-    const { ingredient } = addIngredientDTO;
-    if (!ingredient)
-        throw errors.INVALID_INGREDIENT("Ingredient object is missing in request.");
+  const { foodId } = removeFoodDTO;
 
-    if (!ingredient.food)
-        throw errors.INVALID_INGREDIENT("Food in ingredient object is missing.");
+  const food = await FoodService.GetById(foodId);
+  UpdateMealTotalValues(meal, food, 'remove');
 
-    if (!ingredient.quantity) {
-        throw errors.INVALID_INGREDIENT("Quantity in ingredient object is missing.");
-    }
+  const index = meal.foods.findIndex((f) => f.equals(foodId));
+  meal.foods.splice(index, 1);
 
-    if (ingredient.quantity <= 0) {
-        throw errors.INVALID_INGREDIENT("Quantity cannot be less than zero.");
-    }
-
-    const foodExists = await FoodService.exists(ingredient.food);
-    if (!foodExists)
-        throw errors.FOOD_NOT_FOUND(`Food with id: ${ingredient.food} doesn't exist.`);
-
-    const oldIndex = meal.ingredients.findIndex(i => i.food == ingredient.food);
-    console.log(oldIndex)
-    //If ingredient already exists, increase its quantity
-    if (oldIndex > -1) {
-        const ingredientOld = meal.ingredients[oldIndex];
-        ingredientOld.quantity = parseFloat(ingredientOld.quantity.valueOf().toString()) +
-            parseFloat(ingredient.quantity.valueOf().toString());
-    } else {
-        meal.ingredients.push(ingredient);
-    }
-
-    return meal.save();
-}
-
-const updateIngredient = async (mealId: string | Schema.Types.ObjectId,
-    updateIngredientDTO: IUpdateIngredientDTO): Promise<IMealModel> => {
-    const meal = await Meal.findOne(
-        QUERIES.GET_BY_ID(mealId)
-    );
-
-    if (!meal)
-        throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
-
-    const { ingredientId, ingredient } = updateIngredientDTO;
-    if (!ingredient)
-        throw errors.INVALID_INGREDIENT("Ingredient object is missing in request.");
-
-    if (!ingredientId)
-        throw errors.INVALID_INGREDIENT("Ingredient id is missing in request.");
-
-    const oldIndex = meal.ingredients.findIndex(i => i._id == ingredientId);
-
-    //If ingredient doesn't exists in the list, throw error
-    if (oldIndex === -1)
-        throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredientId} ` +
-            `doesn't exist in ingredients list of meal: ${meal.name}.`);
-
-    const ingredientOld = meal.ingredients[oldIndex];
-    const { food, quantity } = ingredient;
-
-    if (food) {
-        const foodExists = await FoodService.exists(food);
-        if (!foodExists)
-            throw errors.FOOD_NOT_FOUND(`Food with id: ${food} doesn't exist.`);
-
-        ingredientOld.food = food;
-    }
-
-    if (quantity) {
-        if (quantity < 0)
-            throw errors.INVALID_INGREDIENT("Quantity cannot be less than zero.");
-
-        ingredientOld.quantity = quantity;
-    }
-
-    return meal.save();
-}
-
-const removeIngredient = async (mealId: string | Schema.Types.ObjectId,
-    removeIngredientDTO: IRemoveIngredientDTO): Promise<IMealModel> => {
-    const meal = await Meal.findOne(
-        QUERIES.GET_BY_ID(mealId)
-    );
-
-    if (!meal)
-        throw errors.MEAL_NOT_FOUND(`Meal with id: ${mealId} doesn't exist.`);
-
-    const { ingredient } = removeIngredientDTO;
-
-    if (!ingredient)
-        throw errors.INVALID_INGREDIENT("Ingredient object is missing in request.");
-
-    const oldIndex = meal.ingredients.findIndex(i => i._id == ingredient);
-
-    //If ingredient doesn't exists in the list, throw error
-    if (oldIndex === -1)
-        throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredient} ` +
-            `doesn't exist in ingredients list of meal: ${meal.name}.`);
-
-    //Remove ingredient from list
-    meal.ingredients.splice(oldIndex, 1);
-
-    return meal.save();
-}
+  return meal.save();
+};
 
 export default {
-    exists,
-    create,
-    getAll,
-    getAllDeleted,
-    getById,
-    deleteById,
-    restoreById,
-    addIngredient,
-    updateIngredient,
-    removeIngredient
-}
+  Exists: (id: string | mongoose.Types.ObjectId) => BaseService.Exists<MealModel>(id, Meal),
+  GetAll: () => BaseService.GetAll<MealModel>(Meal),
+  GetAllDeleted: () => BaseService.GetAllDeleted<MealModel>(Meal),
+  GetById: (id: string | mongoose.Types.ObjectId) => BaseService.GetById<MealModel>(id, Meal),
+  DeleteById:
+        (id: string | mongoose.Types.ObjectId) => BaseService.DeleteById<MealModel>(id, Meal),
+  RestoreById:
+        (id: string | mongoose.Types.ObjectId) => BaseService.RestoreById<MealModel>(id, Meal),
+  Create,
+  GetWithFoods,
+  AddFood,
+  RemoveFood,
+};
