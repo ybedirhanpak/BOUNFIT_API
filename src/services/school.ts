@@ -74,7 +74,7 @@ const parseMeal = async (mealHTML: HTMLElement): Promise<SchoolMeal> => {
   return (meal as SchoolMeal);
 };
 
-const getCurrentSchoolMeals = async () => {
+const GetCurrentSchoolMeals = async () => {
   const HTML = await getCurrentHTML();
   const root = parse(HTML);
   const lunchHTML = (root as any).querySelector('#block-views-yemek-block');
@@ -89,5 +89,5 @@ const getCurrentSchoolMeals = async () => {
 };
 
 export default {
-  getCurrentSchoolMeals,
+  GetCurrentSchoolMeals,
 };

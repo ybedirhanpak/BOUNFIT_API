@@ -8,14 +8,14 @@ import school from './routes/school';
 
 
 export default () => {
-    const app = Router();
-    //Save routes
-    food(app);
-    meal(app);
-    dailyPlan(app);
-    groceryStore(app);
-    restaurant(app);
-    school(app);
+  const app = Router();
+  // Save routes
+  food(app);
+  meal(app);
+  dailyPlan(app);
+  groceryStore(app);
+  restaurant(app);
+  school(app);
 
-    return app;
-}
+  return app;
+};

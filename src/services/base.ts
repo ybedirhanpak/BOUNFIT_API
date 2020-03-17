@@ -52,7 +52,7 @@ const GetById = async<T> (
   const instance = await DB_MODEL.findOne(
     QUERIES.GET_BY_ID(id),
   );
-  if (!instance) throw errors.INSTANCE_FOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in GetById.`);
+  if (!instance) throw errors.INSTANCE_NOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in GetById.`);
   return instance;
 };
 
@@ -63,7 +63,7 @@ const DeleteById = async<T> (
   const instance = await DB_MODEL.findOne(
     QUERIES.GET_BY_ID(id),
   );
-  if (!instance) throw errors.INSTANCE_FOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in GetById.`);
+  if (!instance) throw errors.INSTANCE_NOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in GetById.`);
   instance.isDeleted = true;
   return instance.save();
 };
@@ -75,7 +75,7 @@ const RestoreById = async<T> (
   const instance = await DB_MODEL.findOne(
     QUERIES.GET_BY_ID(id),
   );
-  if (!instance) throw errors.INSTANCE_FOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in GetById.`);
+  if (!instance) throw errors.INSTANCE_NOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in GetById.`);
   instance.isDeleted = false;
   return instance.save();
 };

@@ -50,7 +50,7 @@ const Create = async (foodDTO: FoodCreateDTO): Promise<FoodModel> => {
     const quantityList: number[] = [];
     const promises = foodDTO.ingredients.map((ingredient) => {
       quantityList.push(ingredient.quantity);
-      return RawFoodService.GetById(ingredient.rawFood);
+      return RawFoodService.GetById(ingredient.rawFood); // Can throw INSTANCE_NOT_FOUND
     });
 
     const rawFoods = await Promise.all(promises);
@@ -162,8 +162,9 @@ const RemoveIngredient = async (foodId: string | Types.ObjectId,
 
   // If ingredient doesn't exists in the list, throw error
   if (oldIndex === -1) {
-    throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredientId} `
-            + `doesn't exist in ingredients list of food: ${food.name}.`);
+    throw errors.INGREDIENT_NOT_FOUND(
+      `Ingredient with id: ${ingredientId} doesn't exist in ingredients list of food: ${food.name}.`,
+    );
   }
 
   const ingredient = food.ingredients[oldIndex];

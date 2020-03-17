@@ -27,16 +27,18 @@ const Create = async (restaurantDTO: RestaurantCreateDTO): Promise<RestaurantMod
   if (restaurantDTO.foods) {
     const falseIndex = await FoodService.FindInvalidElement(restaurantDTO.foods);
     if (falseIndex > -1) {
-      throw errors.FOOD_NOT_FOUND('Food with id:'
-      + `${restaurantDTO.foods[falseIndex]} doesn't exist.`);
+      throw errors.FOOD_NOT_FOUND(
+        `Food with id: ${restaurantDTO.foods[falseIndex]} doesn't exist.`,
+      );
     }
   }
 
   if (restaurantDTO.meals) {
     const falseIndex = await MealService.FindInvalidElement(restaurantDTO.meals);
     if (falseIndex > -1) {
-      throw errors.MEAL_NOT_FOUND('Meal with id:'
-      + `${restaurantDTO.meals[falseIndex]} doesn't exist.`);
+      throw errors.MEAL_NOT_FOUND(
+        `Meal with id: ${restaurantDTO.meals[falseIndex]} doesn't exist.`,
+      );
     }
   }
 
