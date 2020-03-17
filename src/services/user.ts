@@ -1,35 +1,19 @@
-import { Schema } from "mongoose";
-import User from "../models/user";
+import { Types } from 'mongoose';
+import User from '../models/user';
 import {
-    IUserModel,
-    IUserCreateDTO
-} from "../interfaces/user";
-import errors from "../helpers/errors";
-import argon2 from "argon2";
+  UserModel,
+  UserCreateDTO,
+} from '../interfaces/user';
+import errors from '../helpers/errors';
+import BaseService, { QUERIES as BASE_QUERIES } from './base';
 
 const QUERIES = {
-    GET_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
-    GET_DELETED_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
-    NOT_DELETED: { isDeleted: false },
-    DELETED: { isDeleted: true },
-    GET_BY_EMAIL: (email: string) => ({ $and: [{ isDeleted: false }, { email: email }] }),
-}
+  ...BASE_QUERIES,
+  GET_BY_EMAIL: (email: string) => ({ $and: [{ isDeleted: false }, { email }] }),
+};
 
-const exists = async (userId: string | Schema.Types.ObjectId): Promise<boolean> => {
-    return User.exists(QUERIES.GET_BY_ID(userId));
-}
-
-const getById = async (userId: string | Schema.Types.ObjectId): Promise<IUserModel> => {
-    const user = await User.findOne(
-        QUERIES.GET_BY_ID(userId)
-    )
-    if (!user)
-        throw errors.USER_NOT_FOUND();
-
-    return user;
-}
 
 export default {
-    exists,
-    getById
-}
+  Exists: (id: string | Types.ObjectId) => BaseService.Exists<UserModel>(id, User),
+  GetAll: () => BaseService.GetAll<UserModel>(User),
+};
