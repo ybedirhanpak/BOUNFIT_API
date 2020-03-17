@@ -1,14 +1,14 @@
-import mongoose from 'mongoose';
+import { Types } from 'mongoose';
 import { BaseModel, BaseCreateDTO } from './base';
 import { Values } from './values';
 
 export interface MealModel extends BaseModel {
-    foods: mongoose.Types.ObjectId[];
+    foods: Types.ObjectId[];
     totalValues: Values;
 }
 
 export interface MealCreateDTO extends BaseCreateDTO {
-    foods?: mongoose.Types.ObjectId[]
+    foods?: Types.ObjectId[]
 }
 
 export interface AddRemoveFoodDTO {

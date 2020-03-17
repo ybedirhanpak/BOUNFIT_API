@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import { Types } from 'mongoose';
 import Meal from '../models/meal';
 import {
   MealModel,
@@ -50,7 +50,7 @@ const Create = async (mealCreateDTO: MealCreateDTO): Promise<MealModel> => {
   return new Meal(mealIn).save();
 };
 
-const GetWithFoods = async (mealId: string | mongoose.Types.ObjectId): Promise<MealModel> => {
+const GetWithFoods = async (mealId: string | Types.ObjectId): Promise<MealModel> => {
   const meal = await Meal.findOne(
     QUERIES.GET_BY_ID(mealId),
   ).populate(QUERIES.POPULATE_FOODS);
@@ -61,7 +61,7 @@ const GetWithFoods = async (mealId: string | mongoose.Types.ObjectId): Promise<M
 };
 
 const AddFood = async (
-  mealId: string | mongoose.Types.ObjectId,
+  mealId: string | Types.ObjectId,
   addFoodDTO: AddRemoveFoodDTO,
 ): Promise<MealModel> => {
   const meal = await Meal.findOne(
@@ -75,13 +75,13 @@ const AddFood = async (
   const food = await FoodService.GetById(foodId);
   UpdateMealTotalValues(meal, food, 'add');
 
-  meal.foods.push(mongoose.Types.ObjectId(foodId));
+  meal.foods.push(Types.ObjectId(foodId));
 
   return meal.save();
 };
 
 const RemoveFood = async (
-  mealId: string | mongoose.Types.ObjectId,
+  mealId: string | Types.ObjectId,
   removeFoodDTO: AddRemoveFoodDTO,
 ): Promise<MealModel> => {
   const meal = await Meal.findOne(
@@ -102,14 +102,19 @@ const RemoveFood = async (
 };
 
 export default {
-  Exists: (id: string | mongoose.Types.ObjectId) => BaseService.Exists<MealModel>(id, Meal),
+  Exists: (id: string | Types.ObjectId) => BaseService.Exists<MealModel>(id, Meal),
+  FindInvalidElement: (list: Types.ObjectId[]) => BaseService.FindInvalidElement(list, Meal),
   GetAll: () => BaseService.GetAll<MealModel>(Meal),
   GetAllDeleted: () => BaseService.GetAllDeleted<MealModel>(Meal),
-  GetById: (id: string | mongoose.Types.ObjectId) => BaseService.GetById<MealModel>(id, Meal),
-  DeleteById:
-        (id: string | mongoose.Types.ObjectId) => BaseService.DeleteById<MealModel>(id, Meal),
-  RestoreById:
-        (id: string | mongoose.Types.ObjectId) => BaseService.RestoreById<MealModel>(id, Meal),
+  GetById: (
+    id: string | Types.ObjectId,
+  ) => BaseService.GetById<MealModel>(id, Meal),
+  DeleteById: (
+    id: string | Types.ObjectId,
+  ) => BaseService.DeleteById<MealModel>(id, Meal),
+  RestoreById: (
+    id: string | Types.ObjectId,
+  ) => BaseService.RestoreById<MealModel>(id, Meal),
   Create,
   GetWithFoods,
   AddFood,

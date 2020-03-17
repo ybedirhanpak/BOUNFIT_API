@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import { Types } from 'mongoose';
 import Food from '../models/food';
 import {
   FoodModel,
@@ -63,7 +63,7 @@ const Create = async (foodDTO: FoodCreateDTO): Promise<FoodModel> => {
   return new Food(foodIn).save();
 };
 
-const AddIngredient = async (foodId: string | mongoose.Types.ObjectId,
+const AddIngredient = async (foodId: string | Types.ObjectId,
   addIngredientDTO: AddIngredientDTO): Promise<FoodModel> => {
   const food = await Food.findOne(
     QUERIES.GET_BY_ID(foodId),
@@ -88,13 +88,13 @@ const AddIngredient = async (foodId: string | mongoose.Types.ObjectId,
   if (!rawFoodExists) throw errors.RAW_FOOD_NOT_FOUND(`Raw food with id: ${ingredient.rawFood} doesn't exist.`);
 
   const oldIndex = food.ingredients.findIndex(
-    (i) => mongoose.Types.ObjectId(ingredient.rawFood).equals(i.rawFood),
+    (i) => Types.ObjectId(ingredient.rawFood).equals(i.rawFood),
   );
 
   if (oldIndex === -1) {
     const ingredientUpdate: Ingredient = {
       quantity: ingredient.quantity,
-      rawFood: mongoose.Types.ObjectId(ingredient.rawFood),
+      rawFood: Types.ObjectId(ingredient.rawFood),
     };
     food.ingredients.push(ingredientUpdate);
   } else {
@@ -110,7 +110,7 @@ const AddIngredient = async (foodId: string | mongoose.Types.ObjectId,
   return food.save();
 };
 
-const UpdateIngredient = async (foodId: string | mongoose.Types.ObjectId,
+const UpdateIngredient = async (foodId: string | Types.ObjectId,
   updateIngredientDTO: UpdateIngredientDTO): Promise<FoodModel> => {
   const food = await Food.findOne(
     QUERIES.GET_BY_ID(foodId),
@@ -121,7 +121,7 @@ const UpdateIngredient = async (foodId: string | mongoose.Types.ObjectId,
   const { ingredientId, quantity } = updateIngredientDTO;
 
   const oldIndex = food.ingredients.findIndex(
-    (i) => mongoose.Types.ObjectId(ingredientId).equals(i.rawFood),
+    (i) => Types.ObjectId(ingredientId).equals(i.rawFood),
   );
 
   // If ingredient doesn't exists in the list, throw error
@@ -144,7 +144,7 @@ const UpdateIngredient = async (foodId: string | mongoose.Types.ObjectId,
   return food.save();
 };
 
-const RemoveIngredient = async (foodId: string | mongoose.Types.ObjectId,
+const RemoveIngredient = async (foodId: string | Types.ObjectId,
   removeIngredientDTO: RemoveIngredientDTO): Promise<FoodModel> => {
   const food = await Food.findOne(
     QUERIES.GET_BY_ID(foodId),
@@ -157,7 +157,7 @@ const RemoveIngredient = async (foodId: string | mongoose.Types.ObjectId,
   if (!ingredientId) throw errors.INVALID_INGREDIENT('Ingredient id is missing in request.');
 
   const oldIndex = food.ingredients.findIndex(
-    (i) => mongoose.Types.ObjectId(ingredientId).equals(i.rawFood),
+    (i) => Types.ObjectId(ingredientId).equals(i.rawFood),
   );
 
   // If ingredient doesn't exists in the list, throw error
@@ -179,14 +179,13 @@ const RemoveIngredient = async (foodId: string | mongoose.Types.ObjectId,
 };
 
 export default {
-  Exists: (id: string | mongoose.Types.ObjectId) => BaseService.Exists<FoodModel>(id, Food),
+  Exists: (id: string | Types.ObjectId) => BaseService.Exists<FoodModel>(id, Food),
+  FindInvalidElement: (list: Types.ObjectId[]) => BaseService.FindInvalidElement(list, Food),
   GetAll: () => BaseService.GetAll<FoodModel>(Food),
   GetAllDeleted: () => BaseService.GetAllDeleted<FoodModel>(Food),
-  GetById: (id: string | mongoose.Types.ObjectId) => BaseService.GetById<FoodModel>(id, Food),
-  DeleteById:
-      (id: string | mongoose.Types.ObjectId) => BaseService.DeleteById<FoodModel>(id, Food),
-  RestoreById:
-      (id: string | mongoose.Types.ObjectId) => BaseService.RestoreById<FoodModel>(id, Food),
+  GetById: (id: string | Types.ObjectId) => BaseService.GetById<FoodModel>(id, Food),
+  DeleteById: (id: string | Types.ObjectId) => BaseService.DeleteById<FoodModel>(id, Food),
+  RestoreById: (id: string | Types.ObjectId) => BaseService.RestoreById<FoodModel>(id, Food),
   Create,
   AddIngredient,
   UpdateIngredient,

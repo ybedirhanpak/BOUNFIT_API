@@ -1,147 +1,120 @@
-import { Schema } from "mongoose";
-import GroceryStore from "../models/groceryStore";
+import { Types } from 'mongoose';
+import GroceryStore from '../models/groceryStore';
 import {
-    IGroceryStoreModel,
-    IGroceryStoreCreateDTO,
-    IAddRemoveFoodDTO
-} from "../interfaces/groceryStore";
-import errors from "../helpers/errors";
-import FoodService from "../services/food";
+  GroceryStoreModel,
+  GroceryStoreCreateDTO,
+  AddRemoveRawFoodDTO,
+} from '../interfaces/groceryStore';
+import errors from '../helpers/errors';
+import BaseService, { QUERIES as BASE_QUERIES } from './base';
+import RawFoodService from './rawFood';
 
 const QUERIES = {
-    GET_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: false }, { _id: id }] }),
-    GET_DELETED_BY_ID: (id: string | Schema.Types.ObjectId) => ({ $and: [{ isDeleted: true }, { _id: id }] }),
-    NOT_DELETED: { isDeleted: false },
-    DELETED: { isDeleted: true },
-    POPULATE_FOODS: {
-        path: "foods",
-        match: { isDeleted: false },
+  ...BASE_QUERIES,
+  POPULATE_RAW_FOODS: {
+    path: 'foods',
+    match: { isDeleted: false },
+  },
+};
+
+const Create = async (groceryStoreDTO: GroceryStoreCreateDTO): Promise<GroceryStoreModel> => {
+  const groceryStoreIn: GroceryStoreModel = {
+    rawFoods: [],
+    isDeleted: false,
+    ...groceryStoreDTO,
+  };
+
+  if (groceryStoreDTO.rawFoods) {
+    const falseIndex = await RawFoodService.FindInvalidElement(groceryStoreDTO.rawFoods);
+    if (falseIndex > -1) {
+      throw errors.RAW_FOOD_NOT_FOUND('Raw food with id:'
+      + `${groceryStoreDTO.rawFoods[falseIndex]} doesn't exist.`);
     }
-}
+  }
 
-const exists = async (groceryStoreId: string | Schema.Types.ObjectId): Promise<boolean> => {
-    return await GroceryStore.exists(QUERIES.GET_BY_ID(groceryStoreId));
-}
+  return new GroceryStore(groceryStoreIn).save();
+};
 
-const create = async (groceryStoreDTO: IGroceryStoreCreateDTO): Promise<IGroceryStoreModel> => {
-    const groceryStoreIn: IGroceryStoreModel = {
-        foods: [],
-        isDeleted: false,
-        ...groceryStoreDTO
-    };
+const GetWithRawFoods = async (
+  groceryStoreId: string | Types.ObjectId,
+): Promise<GroceryStoreModel> => {
+  const groceryStore = await GroceryStore.findOne(
+    QUERIES.GET_BY_ID(groceryStoreId),
+  ).populate(QUERIES.POPULATE_RAW_FOODS);
 
-    let invalidFood = null;
-    for (let i = 0; i < groceryStoreIn.foods.length; i++) {
-        const foodExists = await FoodService.exists(groceryStoreIn.foods[i]);
-        if (!foodExists) {
-            invalidFood = groceryStoreIn.foods[i];
-            break;
-        }
-    }
+  if (!groceryStore) throw errors.GROCERY_STORE_NOT_FOUND();
+  return groceryStore;
+};
 
-    if (invalidFood)
-        throw errors.FOOD_NOT_FOUND(`Food with id: ${invalidFood} doesn't exist.`);
+const AddRawFood = async (
+  groceryStoreId: string | Types.ObjectId,
+  addFoodDTO: AddRemoveRawFoodDTO,
+): Promise<GroceryStoreModel> => {
+  const groceryStore = await GroceryStore.findOne(
+    QUERIES.GET_BY_ID(groceryStoreId),
+  );
 
-    return await new GroceryStore(groceryStoreIn).save();
-}
+  if (!groceryStore) throw errors.GROCERY_STORE_NOT_FOUND();
 
-const getAll = async (): Promise<IGroceryStoreModel[]> => {
-    return await GroceryStore.find(QUERIES.NOT_DELETED)
-        .populate(QUERIES.POPULATE_FOODS);
-}
+  const { rawFoodId } = addFoodDTO;
+  if (!rawFoodId) throw errors.VALIDATION_ERROR('Raw food is missing in request.');
 
-const getAllDeleted = async (): Promise<IGroceryStoreModel[]> => {
-    return await GroceryStore.find(QUERIES.DELETED);
-}
+  const rawFoodExists = await RawFoodService.Exists(rawFoodId);
+  if (!rawFoodExists) throw errors.RAW_FOOD_NOT_FOUND(`Raw food with id: ${rawFoodId} doesn't exist`);
 
-const getById = async (groceryStoreId: string | Schema.Types.ObjectId): Promise<IGroceryStoreModel> => {
-    const groceryStore = await GroceryStore.findOne(
-        QUERIES.GET_BY_ID(groceryStoreId)
-    ).populate(QUERIES.POPULATE_FOODS);
+  const oldIndex = groceryStore.rawFoods.findIndex((f) => f.equals(rawFoodId));
+  if (oldIndex > -1) {
+    throw errors.FOOD_ALREADY_EXISTS(`Raw food with id: ${rawFoodId} already exists`
+  + `in grocery store: ${groceryStore.name}`);
+  }
 
-    if (!groceryStore)
-        throw errors.GROCERY_STORE_NOT_FOUND();
-    return groceryStore;
-}
+  // Add food to list
+  groceryStore.rawFoods.push(Types.ObjectId(rawFoodId));
+  return groceryStore.save();
+};
 
-const deleteById = async (groceryStoreId: string | Schema.Types.ObjectId): Promise<IGroceryStoreModel> => {
-    const groceryStore = await GroceryStore.findOne(
-        QUERIES.GET_BY_ID(groceryStoreId)
-    )
-    if (!groceryStore)
-        throw errors.GROCERY_STORE_NOT_FOUND();
-    groceryStore.isDeleted = true;
-    return groceryStore.save();
-}
+const RemoveRawFood = async (
+  groceryStoreId: string | Types.ObjectId,
+  removeFoodDTO: AddRemoveRawFoodDTO,
+): Promise<GroceryStoreModel> => {
+  const groceryStore = await GroceryStore.findOne(
+    QUERIES.GET_BY_ID(groceryStoreId),
+  );
 
-const restoreById = async (groceryStoreId: string | Schema.Types.ObjectId): Promise<IGroceryStoreModel> => {
-    const groceryStore = await GroceryStore.findOne(
-        QUERIES.GET_DELETED_BY_ID(groceryStoreId)
-    )
-    if (!groceryStore)
-        throw errors.GROCERY_STORE_NOT_FOUND();
-    groceryStore.isDeleted = false;
-    return groceryStore.save();
-}
+  if (!groceryStore) throw errors.GROCERY_STORE_NOT_FOUND();
 
-const addFood = async (groceryStoreId: string | Schema.Types.ObjectId, addFoodDTO: IAddRemoveFoodDTO): Promise<IGroceryStoreModel> => {
-    const groceryStore = await GroceryStore.findOne(
-        QUERIES.GET_BY_ID(groceryStoreId)
-    );
+  const { rawFoodId } = removeFoodDTO;
+  if (!rawFoodId) throw errors.VALIDATION_ERROR('Raw food is missing in request.');
 
-    if (!groceryStore)
-        throw errors.GROCERY_STORE_NOT_FOUND();
+  const rawFoodExists = await RawFoodService.Exists(rawFoodId);
+  if (!rawFoodExists) throw errors.RAW_FOOD_NOT_FOUND(`Raw food with id: ${rawFoodId} doesn't exist`);
 
-    const { food } = addFoodDTO;
-    if (!food)
-        throw errors.VALIDATION_ERROR("Food is missing in request.");
+  const oldIndex = groceryStore.rawFoods.findIndex((r) => r.equals(rawFoodId));
+  if (oldIndex === -1) {
+    throw errors.RAW_FOOD_NOT_FOUND(`Raw food with id: ${rawFoodId} doesn't exist`
+  + ` in grocery store: ${groceryStore.name}`);
+  }
 
-    const foodExists = await FoodService.exists(food);
-    if (!foodExists)
-        throw errors.FOOD_NOT_FOUND(`Food with id: ${food} doesn't exist`);
-
-    const oldIndex = groceryStore.foods.findIndex(f => f == food);
-    if (oldIndex > -1)
-        throw errors.FOOD_ALREADY_EXISTS(`Food with id: ${food} already exists in grocery store: ${groceryStore.name}`);
-
-    //Add food to list
-    groceryStore.foods.push(food);
-    return groceryStore.save();
-}
-
-const removeFood = async (groceryStoreId: string | Schema.Types.ObjectId, removeFoodDTO: IAddRemoveFoodDTO): Promise<IGroceryStoreModel> => {
-    const groceryStore = await GroceryStore.findOne(
-        QUERIES.GET_BY_ID(groceryStoreId)
-    );
-
-    if (!groceryStore)
-        throw errors.GROCERY_STORE_NOT_FOUND();
-
-    const { food } = removeFoodDTO;
-    if (!food)
-        throw errors.VALIDATION_ERROR("Food is missing in request.");
-
-    const foodExists = await FoodService.exists(food);
-    if (!foodExists)
-        throw errors.FOOD_NOT_FOUND(`Food with id: ${food} doesn't exist`);
-
-    const oldIndex = groceryStore.foods.findIndex(m => m == food);
-    if (oldIndex === -1)
-        throw errors.FOOD_NOT_FOUND(`Food with id: ${food} doesn't exist in grocery store: ${groceryStore.name}`);
-
-    //Remove food from list
-    groceryStore.foods.splice(oldIndex, 1);
-    return groceryStore.save();
-}
+  // Remove food from list
+  groceryStore.rawFoods.splice(oldIndex, 1);
+  return groceryStore.save();
+};
 
 export default {
-    exists,
-    create,
-    getAll,
-    getAllDeleted,
-    getById,
-    deleteById,
-    restoreById,
-    addFood,
-    removeFood
-}
+  Exists: (id: string | Types.ObjectId) => BaseService.Exists<GroceryStoreModel>(id, GroceryStore),
+  GetAll: () => BaseService.GetAll<GroceryStoreModel>(GroceryStore),
+  GetAllDeleted: () => BaseService.GetAllDeleted<GroceryStoreModel>(GroceryStore),
+  GetById: (
+    id: string | Types.ObjectId,
+  ) => BaseService.GetById<GroceryStoreModel>(id, GroceryStore),
+  DeleteById: (
+    id: string | Types.ObjectId,
+  ) => BaseService.DeleteById<GroceryStoreModel>(id, GroceryStore),
+  RestoreById: (
+    id: string | Types.ObjectId,
+  ) => BaseService.RestoreById<GroceryStoreModel>(id, GroceryStore),
+  Create,
+  GetWithRawFoods,
+  AddRawFood,
+  RemoveRawFood,
+};

@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import { Types } from 'mongoose';
 import RawFood from '../models/rawFood';
 import {
   RawFoodModel,
@@ -28,7 +28,7 @@ const Create = async (rawFoodDTO: RawFoodCreateDTO): Promise<RawFoodModel> => {
   return new RawFood(rawFoodIn).save();
 };
 
-const UpdateById = async (foodId: string | mongoose.Types.ObjectId,
+const UpdateById = async (foodId: string | Types.ObjectId,
   foodUpdateDTO: RawFoodUpdateDTO): Promise<RawFoodModel> => {
   const rawFood = await RawFood.findOne(
     QUERIES.GET_BY_ID(foodId),
@@ -48,14 +48,13 @@ const UpdateById = async (foodId: string | mongoose.Types.ObjectId,
 };
 
 export default {
-  Exists: (id: string | mongoose.Types.ObjectId) => BaseService.Exists<RawFoodModel>(id, RawFood),
+  Exists: (id: string | Types.ObjectId) => BaseService.Exists<RawFoodModel>(id, RawFood),
+  FindInvalidElement: (list: Types.ObjectId[]) => BaseService.FindInvalidElement(list, RawFood),
   GetAll: () => BaseService.GetAll<RawFoodModel>(RawFood),
   GetAllDeleted: () => BaseService.GetAllDeleted<RawFoodModel>(RawFood),
-  GetById: (id: string | mongoose.Types.ObjectId) => BaseService.GetById<RawFoodModel>(id, RawFood),
-  DeleteById:
-    (id: string | mongoose.Types.ObjectId) => BaseService.DeleteById<RawFoodModel>(id, RawFood),
-  RestoreById:
-    (id: string | mongoose.Types.ObjectId) => BaseService.RestoreById<RawFoodModel>(id, RawFood),
+  GetById: (id: string | Types.ObjectId) => BaseService.GetById<RawFoodModel>(id, RawFood),
+  DeleteById: (id: string | Types.ObjectId) => BaseService.DeleteById<RawFoodModel>(id, RawFood),
+  RestoreById: (id: string | Types.ObjectId) => BaseService.RestoreById<RawFoodModel>(id, RawFood),
   Create,
   UpdateById,
 };

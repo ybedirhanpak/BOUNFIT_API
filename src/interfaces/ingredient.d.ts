@@ -1,8 +1,8 @@
-import mongoose from 'mongoose';
+import { Types } from 'mongoose';
 
 export interface Ingredient {
-    _id?: mongoose.Types.ObjectId,
-    rawFood: mongoose.Types.ObjectId;
+    _id?: Types.ObjectId,
+    rawFood: Types.ObjectId;
     quantity: number;
 }
 
