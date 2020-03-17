@@ -28,22 +28,24 @@ const Create = async (rawFoodDTO: RawFoodCreateDTO): Promise<RawFoodModel> => {
   return new RawFood(rawFoodIn).save();
 };
 
-const UpdateById = async (foodId: string | Types.ObjectId,
-  foodUpdateDTO: RawFoodUpdateDTO): Promise<RawFoodModel> => {
+const UpdateById = async (
+  foodId: string | Types.ObjectId,
+  updateDTO: RawFoodUpdateDTO,
+): Promise<RawFoodModel> => {
   const rawFood = await RawFood.findOne(
     QUERIES.GET_BY_ID(foodId),
   );
-  if (!rawFood) throw errors.FOOD_NOT_FOUND();
+  if (!rawFood) throw errors.RAW_FOOD_NOT_FOUND();
 
-  if (foodUpdateDTO.protein && foodUpdateDTO.protein < 0) throw errors.INVALID_RAW_FOOD('Protein cannot be less than zero.');
-  if (foodUpdateDTO.carb && foodUpdateDTO.carb < 0) throw errors.INVALID_RAW_FOOD('Carb cannot be less than zero.');
-  if (foodUpdateDTO.fat && foodUpdateDTO.fat < 0) throw errors.INVALID_RAW_FOOD('Fat cannot be less than zero.');
-  if (foodUpdateDTO.calories && foodUpdateDTO.calories < 0) throw errors.INVALID_RAW_FOOD('Calories cannot be less than zero.');
-  if (foodUpdateDTO.name && foodUpdateDTO.name.length > 100) {
+  if (updateDTO.protein && updateDTO.protein < 0) throw errors.INVALID_RAW_FOOD('Protein cannot be less than zero.');
+  if (updateDTO.carb && updateDTO.carb < 0) throw errors.INVALID_RAW_FOOD('Carb cannot be less than zero.');
+  if (updateDTO.fat && updateDTO.fat < 0) throw errors.INVALID_RAW_FOOD('Fat cannot be less than zero.');
+  if (updateDTO.calories && updateDTO.calories < 0) throw errors.INVALID_RAW_FOOD('Calories cannot be less than zero.');
+  if (updateDTO.name && updateDTO.name.length > 100) {
     throw errors.INVALID_RAW_FOOD('Name cannot exceed 100 characters.');
   }
 
-  rawFood.set(foodUpdateDTO);
+  rawFood.set(updateDTO);
   return rawFood.save();
 };
 

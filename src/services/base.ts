@@ -18,10 +18,7 @@ export const QUERIES = {
 const Exists = async <T> (
   id: string | Types.ObjectId,
   DB_MODEL: Model<T & Document>,
-): Promise<boolean> => {
-  DB_MODEL.exists(QUERIES.GET_BY_ID(id));
-  return false;
-};
+): Promise<boolean> => DB_MODEL.exists(QUERIES.GET_BY_ID(id));
 
 const FindInvalidElement = async <T> (
   list: Types.ObjectId[],

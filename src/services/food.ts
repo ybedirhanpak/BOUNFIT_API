@@ -28,6 +28,7 @@ const UpdateFoodTotalValues = (
   food.total.values.carb += c * rawFood.carb * (quantity / 100);
   food.total.values.fat += c * rawFood.fat * (quantity / 100);
   food.total.values.calories += c * rawFood.calories * (quantity / 100);
+  food.total.quantity += c * quantity;
 };
 
 const Create = async (foodDTO: FoodCreateDTO): Promise<FoodModel> => {
@@ -85,7 +86,11 @@ const AddIngredient = async (foodId: string | Types.ObjectId,
   }
 
   const rawFoodExists = await RawFoodService.Exists(ingredient.rawFood);
-  if (!rawFoodExists) throw errors.RAW_FOOD_NOT_FOUND(`Raw food with id: ${ingredient.rawFood} doesn't exist.`);
+  if (!rawFoodExists) {
+    throw errors.RAW_FOOD_NOT_FOUND(
+      `Raw food with id: ${ingredient.rawFood} doesn't exist.`,
+    );
+  }
 
   const oldIndex = food.ingredients.findIndex(
     (i) => Types.ObjectId(ingredient.rawFood).equals(i.rawFood),
@@ -103,7 +108,6 @@ const AddIngredient = async (foodId: string | Types.ObjectId,
     ingredientOld.quantity += ingredient.quantity;
   }
 
-  food.total.quantity += ingredient.quantity;
   const rawFood = await RawFoodService.GetById(ingredient.rawFood);
   UpdateFoodTotalValues(food, rawFood, ingredient.quantity, 'add');
 
@@ -171,7 +175,6 @@ const RemoveIngredient = async (foodId: string | Types.ObjectId,
 
   const rawFood = await RawFoodService.GetById(ingredient.rawFood);
   UpdateFoodTotalValues(food, rawFood, ingredient.quantity, 'remove');
-  food.total.quantity -= ingredient.quantity;
 
   // Remove ingredient from list
   food.ingredients.splice(oldIndex, 1);

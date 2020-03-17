@@ -7,4 +7,5 @@ export default {
   api: {
     prefix: '/api',
   },
+  isTesting: () => (process.env.NODE_ENV === 'test'),
 };

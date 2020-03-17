@@ -3,6 +3,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import config from './config';
 import { connectDatabase } from './database';
+import { getMockDatabaseURI } from './database/mock';
 import routes from './api';
 
 // Create app instance
@@ -31,7 +32,7 @@ app.use(config.api.prefix, routes());
 
 const { port } = config;
 
-connectDatabase();
+if (process.env.NODE_ENV !== 'test') connectDatabase();
 
 app.listen(port, () => {
   console.log(`🛡️  Server listening on port: ${config.port} 🛡️`);
