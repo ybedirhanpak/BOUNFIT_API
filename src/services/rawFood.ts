@@ -13,7 +13,7 @@ const QUERIES = {
 };
 
 const Create = async (rawFoodDTO: RawFoodCreateDTO): Promise<RawFoodModel> => {
-  if (!rawFoodDTO.name) throw errors.INVALID_RAW_FOOD('There must be a name of the raw food');
+  if (!rawFoodDTO.name) throw errors.VALIDATION_ERROR('There must be a name of the raw food');
   if (rawFoodDTO.protein < 0) throw errors.INVALID_RAW_FOOD('Protein cannot be less than zero.');
   if (rawFoodDTO.carb < 0) throw errors.INVALID_RAW_FOOD('Carb cannot be less than zero.');
   if (rawFoodDTO.fat < 0) throw errors.INVALID_RAW_FOOD('Fat cannot be less than zero.');

@@ -18,7 +18,8 @@ export default (app: Router) => {
       res.status(200).send(rawFoods);
     } catch (err) {
       if (err.name === errorNames.INSTANCE_NOT_FOUND
-        || err.name === errorNames.INVALID_RAW_FOOD) {
+        || err.name === errorNames.INVALID_RAW_FOOD
+        || err.name === errorNames.VALIDATION_ERROR) {
         res.status(400).send(err);
       } else {
         res.status(500).send(errors.INTERNAL_ERROR(err));
@@ -86,7 +87,7 @@ export default (app: Router) => {
 
   route.post('/restore/:Id', async (req, res) => {
     try {
-      const food = await RawFoodService.DeleteById(req.params.Id);
+      const food = await RawFoodService.RestoreById(req.params.Id);
       res.status(200).send(food);
     } catch (err) {
       if (err.name === errorNames.INSTANCE_NOT_FOUND) {

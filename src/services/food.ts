@@ -47,6 +47,8 @@ const Create = async (foodDTO: FoodCreateDTO): Promise<FoodModel> => {
     ...foodDTO,
   };
 
+  if (!foodDTO.name) throw errors.VALIDATION_ERROR('Name is missing in request body.');
+
   if (foodDTO.ingredients) {
     const quantityList: number[] = [];
     const promises = foodDTO.ingredients.map((ingredient) => {

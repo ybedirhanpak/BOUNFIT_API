@@ -19,7 +19,8 @@ export default (app: Router) => {
       const foods = await FoodService.Create(createDTO);
       res.status(200).send(foods);
     } catch (err) {
-      if (err.name === errorNames.INSTANCE_NOT_FOUND) {
+      if (err.name === errorNames.INSTANCE_NOT_FOUND
+        || err.name === errorNames.VALIDATION_ERROR) {
         res.status(400).send(err);
       } else {
         res.status(500).send(errors.INTERNAL_ERROR(err));

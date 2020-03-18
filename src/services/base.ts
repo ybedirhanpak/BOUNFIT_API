@@ -59,7 +59,7 @@ const DeleteById = async<T> (
   const instance = await DB_MODEL.findOne(
     QUERIES.GET_BY_ID(id),
   );
-  if (!instance) throw errors.INSTANCE_NOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in GetById.`);
+  if (!instance) throw errors.INSTANCE_NOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in DeleteById.`);
   instance.isDeleted = true;
   return instance.save();
 };
@@ -69,9 +69,9 @@ const RestoreById = async<T> (
   DB_MODEL: Model<T & Document & BaseModel>,
 ): Promise<T> => {
   const instance = await DB_MODEL.findOne(
-    QUERIES.GET_BY_ID(id),
+    QUERIES.GET_DELETED_BY_ID(id),
   );
-  if (!instance) throw errors.INSTANCE_NOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in GetById.`);
+  if (!instance) throw errors.INSTANCE_NOT_FOUND(`${DB_MODEL.modelName} with id: ${id} not found in RestoreById.`);
   instance.isDeleted = false;
   return instance.save();
 };
