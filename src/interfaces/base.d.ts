@@ -1,7 +1,7 @@
-import { Schema } from 'mongoose';
+import { Types } from 'mongoose';
 
 export interface BaseModel {
-    _id?: string | Schema.Types.ObjectId;
+    _id?: string | Types.ObjectId;
     name: string;
     isDeleted: boolean;
 }

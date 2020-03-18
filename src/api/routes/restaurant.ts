@@ -58,6 +58,32 @@ export default (app: Router) => {
     }
   });
 
+  route.post('/delete/:Id', async (req, res) => {
+    try {
+      const restaurant = await RestaurantService.DeleteById(req.params.Id);
+      res.status(200).send(restaurant);
+    } catch (err) {
+      if (err.name === errorNames.INSTANCE_NOT_FOUND) {
+        res.status(400).send(err);
+      } else {
+        res.status(500).send(errors.INTERNAL_ERROR(err));
+      }
+    }
+  });
+
+  route.post('/restore/:Id', async (req, res) => {
+    try {
+      const restaurant = await RestaurantService.RestoreById(req.params.Id);
+      res.status(200).send(restaurant);
+    } catch (err) {
+      if (err.name === errorNames.INSTANCE_NOT_FOUND) {
+        res.status(400).send(err);
+      } else {
+        res.status(500).send(errors.INTERNAL_ERROR(err));
+      }
+    }
+  });
+
   route.post('/addFood/:Id', async (req, res) => {
     try {
       const addFoodDTO = req.body as AddRemoveFoodDTO;

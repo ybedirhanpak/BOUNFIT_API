@@ -21,7 +21,7 @@ const UpdateFoodTotalValues = (
   food: FoodModel,
   rawFood: RawFoodModel,
   quantity: number,
-  type: 'add' | 'remove',
+  type: 'add' | 'remove' | 'replace',
 ) => {
   const c = type === 'add' ? 1 : -1;
   food.total.values.protein += c * rawFood.protein * (quantity / 100);
@@ -51,10 +51,14 @@ const Create = async (foodDTO: FoodCreateDTO): Promise<FoodModel> => {
 
   if (foodDTO.ingredients) {
     const quantityList: number[] = [];
+    let emptyQuantity = false;
     const promises = foodDTO.ingredients.map((ingredient) => {
-      quantityList.push(ingredient.quantity);
+      if (!ingredient.quantity) emptyQuantity = true;
+      else quantityList.push(ingredient.quantity);
       return RawFoodService.GetById(ingredient.rawFood); // Can throw INSTANCE_NOT_FOUND
     });
+
+    if (emptyQuantity) throw errors.INVALID_INGREDIENT('Quantity is required in ingredient.');
 
     const rawFoods = await Promise.all(promises);
 
@@ -124,15 +128,18 @@ const UpdateIngredient = async (foodId: string | Types.ObjectId,
 
   if (!food) throw errors.FOOD_NOT_FOUND(`Food with id: ${foodId} doesn't exist.`);
 
-  const { ingredientId, quantity } = updateIngredientDTO;
+  const { rawFoodId, quantity } = updateIngredientDTO;
+
+  if (!rawFoodId) throw errors.INVALID_INGREDIENT('Ingredient id is missing in request.');
+  if (!quantity) throw errors.INVALID_INGREDIENT('Quantity is missing in request.');
 
   const oldIndex = food.ingredients.findIndex(
-    (i) => Types.ObjectId(ingredientId).equals(i.rawFood),
+    (i) => Types.ObjectId(rawFoodId).equals(i.rawFood),
   );
 
   // If ingredient doesn't exists in the list, throw error
   if (oldIndex === -1) {
-    throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${ingredientId} `
+    throw errors.INGREDIENT_NOT_FOUND(`Ingredient with id: ${rawFoodId} `
             + `doesn't exist in ingredients list of food: ${food.name}.`);
   }
 
@@ -143,7 +150,6 @@ const UpdateIngredient = async (foodId: string | Types.ObjectId,
 
     const rawFood = await RawFoodService.GetById(ingredient.rawFood);
     UpdateFoodTotalValues(food, rawFood, quantity - ingredient.quantity, 'add');
-    food.total.quantity += quantity - ingredient.quantity;
     ingredient.quantity = quantity;
   }
 
@@ -158,18 +164,18 @@ const RemoveIngredient = async (foodId: string | Types.ObjectId,
 
   if (!food) throw errors.FOOD_NOT_FOUND(`Food with id: ${foodId} doesn't exist.`);
 
-  const { ingredientId } = removeIngredientDTO;
+  const { rawFoodId } = removeIngredientDTO;
 
-  if (!ingredientId) throw errors.INVALID_INGREDIENT('Ingredient id is missing in request.');
+  if (!rawFoodId) throw errors.INVALID_INGREDIENT('Ingredient id is missing in request.');
 
   const oldIndex = food.ingredients.findIndex(
-    (i) => Types.ObjectId(ingredientId).equals(i.rawFood),
+    (i) => Types.ObjectId(rawFoodId).equals(i.rawFood),
   );
 
   // If ingredient doesn't exists in the list, throw error
   if (oldIndex === -1) {
     throw errors.INGREDIENT_NOT_FOUND(
-      `Ingredient with id: ${ingredientId} doesn't exist in ingredients list of food: ${food.name}.`,
+      `Ingredient with id: ${rawFoodId} doesn't exist in ingredients list of food: ${food.name}.`,
     );
   }
 

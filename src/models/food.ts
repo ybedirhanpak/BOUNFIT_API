@@ -12,7 +12,11 @@ const FoodSchema = new Schema({
           type: Schema.Types.ObjectId,
           ref: Models.RAW_FOOD,
         },
-        quantity: Number,
+        quantity: {
+          type: Number,
+          required: true,
+          default: 0,
+        },
       },
     ],
     required: true,

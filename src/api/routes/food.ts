@@ -125,7 +125,7 @@ export default (app: Router) => {
 
   route.post('/restore/:Id', async (req, res) => {
     try {
-      const food = await FoodService.DeleteById(req.params.Id);
+      const food = await FoodService.RestoreById(req.params.Id);
       res.status(200).send(food);
     } catch (err) {
       if (err.name === errorNames.INSTANCE_NOT_FOUND) {

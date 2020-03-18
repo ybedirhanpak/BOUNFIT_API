@@ -10,7 +10,7 @@ chai.use(chaiHttp);
 const { expect } = chai;
 const INVALID_ID = '1a1111aa111aa11aaaaaa1a1';
 
-export const BaseIndependetTests = (path: string) => {
+export const BaseApiIndependentTests = (path: string) => {
   // eslint-disable-next-line no-undef
   before(async () => {
     await connectDatabase();
@@ -20,7 +20,7 @@ export const BaseIndependetTests = (path: string) => {
     chai.request(app).get(`/api/${path}/getAll`)
       .then((res) => {
         expect(res).to.have.property('status', 200);
-        expect(res.body).to.be.an('array', 'of raw foods');
+        expect(res.body).to.be.an('array', 'of instances');
         res.body.forEach((element: any) => {
           expect(element).to.have.property('isDeleted', false);
         });
@@ -31,7 +31,7 @@ export const BaseIndependetTests = (path: string) => {
     chai.request(app).get(`/api/${path}/getAllDeleted`)
       .then((res) => {
         expect(res).to.have.property('status', 200);
-        expect(res.body).to.be.an('array', 'of raw foods');
+        expect(res.body).to.be.an('array', 'of instances');
         res.body.forEach((element: any) => {
           expect(element).to.have.property('isDeleted', true);
         });
@@ -63,7 +63,7 @@ export const BaseIndependetTests = (path: string) => {
   });
 };
 
-export const BaseSelfDependentTests = (path: string, createDTO: any) => {
+export const BaseApiSelfDependentTests = (path: string, createDTO: any) => {
   // eslint-disable-next-line no-undef
   before(async () => {
     await connectDatabase();
@@ -73,24 +73,24 @@ export const BaseSelfDependentTests = (path: string, createDTO: any) => {
     const createRes = await chai.request(app).post(`/api/${path}/create`)
       .send(createDTO);
     expect(createRes).to.have.property('status', 200);
-    const rawFood = createRes.body;
-    expect(rawFood).to.have.property('_id');
-    expect(rawFood).to.include(createDTO);
+    const instance = createRes.body;
+    expect(instance).to.have.property('_id');
+    expect(instance).to.include(createDTO);
 
-    const getRes = await chai.request(app).get(`/api/${path}/get/${rawFood._id}`);
+    const getRes = await chai.request(app).get(`/api/${path}/get/${instance._id}`);
     expect(getRes).to.have.property('status', 200);
-    const getRawFood = getRes.body;
-    expect(getRawFood).to.have.property('_id', rawFood._id);
-    expect(getRawFood).to.include(createDTO);
+    const getInstance = getRes.body;
+    expect(getInstance).to.have.property('_id', instance._id);
+    expect(getInstance).to.include(createDTO);
   });
 
   it('/create , /getAll : successful get should return status 200', async () => {
     const createRes = await chai.request(app).post(`/api/${path}/create`)
       .send(createDTO);
     expect(createRes).to.have.property('status', 200);
-    const rawFood = createRes.body;
-    expect(rawFood).to.have.property('_id');
-    expect(rawFood).to.include(createDTO);
+    const instance = createRes.body;
+    expect(instance).to.have.property('_id');
+    expect(instance).to.include(createDTO);
 
     const getRes = await chai.request(app).get(`/api/${path}/getAll`);
     expect(getRes).to.have.property('status', 200);
@@ -105,16 +105,16 @@ export const BaseSelfDependentTests = (path: string, createDTO: any) => {
     const createRes = await chai.request(app).post(`/api/${path}/create`)
       .send(createDTO);
     expect(createRes).to.have.property('status', 200);
-    const rawFood = createRes.body;
-    expect(rawFood).to.have.property('_id');
-    expect(rawFood).to.include(createDTO);
+    const instance = createRes.body;
+    expect(instance).to.have.property('_id');
+    expect(instance).to.include(createDTO);
 
-    const deleteRes = await chai.request(app).post(`/api/${path}/delete/${rawFood._id}`);
+    const deleteRes = await chai.request(app).post(`/api/${path}/delete/${instance._id}`);
     expect(deleteRes).to.have.property('status', 200);
-    const deletedRawFood = deleteRes.body;
-    expect(deletedRawFood).to.have.property('_id', rawFood._id);
-    expect(deletedRawFood).to.have.property('isDeleted', true);
-    expect(deletedRawFood).to.include(createDTO);
+    const deletedInstance = deleteRes.body;
+    expect(deletedInstance).to.have.property('_id', instance._id);
+    expect(deletedInstance).to.have.property('isDeleted', true);
+    expect(deletedInstance).to.include(createDTO);
 
     const getAllDeletedRes = await chai.request(app).get(`/api/${path}/getAllDeleted`);
     expect(getAllDeletedRes).to.have.property('status', 200);
@@ -124,12 +124,12 @@ export const BaseSelfDependentTests = (path: string, createDTO: any) => {
       expect(r).to.have.property('isDeleted', true);
     });
 
-    const restoredRes = await chai.request(app).post(`/api/${path}/restore/${rawFood._id}`);
+    const restoredRes = await chai.request(app).post(`/api/${path}/restore/${instance._id}`);
     expect(restoredRes).to.have.property('status', 200);
-    const restoredRawFood = restoredRes.body;
-    expect(restoredRawFood).to.have.property('_id', rawFood._id);
-    expect(restoredRawFood).to.have.property('isDeleted', false);
-    expect(restoredRawFood).to.include(createDTO);
+    const restoredInstance = restoredRes.body;
+    expect(restoredInstance).to.have.property('_id', instance._id);
+    expect(restoredInstance).to.have.property('isDeleted', false);
+    expect(restoredInstance).to.include(createDTO);
   });
 
   it('/create , /delete, /getAllDeleted, /restore : invalid delete, restore should return status 400', async () => {
@@ -137,18 +137,18 @@ export const BaseSelfDependentTests = (path: string, createDTO: any) => {
     const createRes = await chai.request(app).post(`/api/${path}/create`)
       .send(createDTO);
     expect(createRes).to.have.property('status', 200);
-    const rawFood = createRes.body;
-    expect(rawFood).to.have.property('_id');
-    expect(rawFood).to.include(createDTO);
+    const instance = createRes.body;
+    expect(instance).to.have.property('_id');
+    expect(instance).to.include(createDTO);
     // Delete once
-    const deleteRes = await chai.request(app).post(`/api/${path}/delete/${rawFood._id}`);
+    const deleteRes = await chai.request(app).post(`/api/${path}/delete/${instance._id}`);
     expect(deleteRes).to.have.property('status', 200);
-    const deletedRawFood = deleteRes.body;
-    expect(deletedRawFood).to.have.property('_id', rawFood._id);
-    expect(deletedRawFood).to.have.property('isDeleted', true);
-    expect(deletedRawFood).to.include(createDTO);
+    const deletedInstance = deleteRes.body;
+    expect(deletedInstance).to.have.property('_id', instance._id);
+    expect(deletedInstance).to.have.property('isDeleted', true);
+    expect(deletedInstance).to.include(createDTO);
     // Cannot delete twice
-    const deleteRes2 = await chai.request(app).post(`/api/${path}/delete/${rawFood._id}`);
+    const deleteRes2 = await chai.request(app).post(`/api/${path}/delete/${instance._id}`);
     expect(deleteRes2).to.have.property('status', 400);
     expect(deleteRes2.body).to.have.property('name', errorNames.INSTANCE_NOT_FOUND);
     // Cannot delete some invalid id
@@ -156,14 +156,14 @@ export const BaseSelfDependentTests = (path: string, createDTO: any) => {
     expect(deleteRes3).to.have.property('status', 400);
     expect(deleteRes3.body).to.have.property('name', errorNames.INSTANCE_NOT_FOUND);
     // Restore once
-    const restoreRes = await chai.request(app).post(`/api/${path}/restore/${rawFood._id}`);
+    const restoreRes = await chai.request(app).post(`/api/${path}/restore/${instance._id}`);
     expect(restoreRes).to.have.property('status', 200);
-    const restoredRawFood = restoreRes.body;
-    expect(restoredRawFood).to.have.property('_id', rawFood._id);
-    expect(restoredRawFood).to.have.property('isDeleted', false);
-    expect(restoredRawFood).to.include(createDTO);
+    const restoredInstance = restoreRes.body;
+    expect(restoredInstance).to.have.property('_id', instance._id);
+    expect(restoredInstance).to.have.property('isDeleted', false);
+    expect(restoredInstance).to.include(createDTO);
     // Cannot restore twice
-    const restoreRes2 = await chai.request(app).post(`/api/${path}/restore/${rawFood._id}`);
+    const restoreRes2 = await chai.request(app).post(`/api/${path}/restore/${instance._id}`);
     expect(restoreRes2).to.have.property('status', 400);
     expect(restoreRes2.body).to.have.property('name', errorNames.INSTANCE_NOT_FOUND);
   });

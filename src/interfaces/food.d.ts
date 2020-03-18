@@ -16,10 +16,10 @@ export interface AddIngredientDTO {
 }
 
 export interface RemoveIngredientDTO {
-    ingredientId: string;
+    rawFoodId: string;
 }
 
 export interface UpdateIngredientDTO {
-    ingredientId: string;
+    rawFoodId: string;
     quantity: number;
 }

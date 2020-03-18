@@ -1,7 +1,6 @@
 import { Types } from 'mongoose';
 
 export interface Ingredient {
-    _id?: Types.ObjectId,
     rawFood: Types.ObjectId;
     quantity: number;
 }
