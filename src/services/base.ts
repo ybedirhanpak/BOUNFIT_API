@@ -33,7 +33,6 @@ const FindInvalidElement = async <T> (
   return -1;
 };
 
-
 const GetAll = async<T> (
   DB_MODEL: Model<T & Document>,
 ) : Promise<T[]> => DB_MODEL.find(QUERIES.NOT_DELETED);
